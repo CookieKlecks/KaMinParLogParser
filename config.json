@@ -1,0 +1,14 @@
+{
+  "input": {
+    "runs-dir": "path/to/runs/directory",
+    "log-suffix": ".log"
+  },
+  "output": {
+    "override": false,
+    "result": {
+      "format": "JSON",
+      "name": "",
+      "suffix": ".json"
+    }
+  }
+}
