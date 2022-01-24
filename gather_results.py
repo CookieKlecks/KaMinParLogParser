@@ -4,21 +4,24 @@ import json
 import os
 import pathlib
 
-import parse_logs
 import utility
 
 JSON_SUFFIX = '.json'
 KEY_PATH_SEPARATOR = '.'
 
 
-def gather_run_results(run_path, result_columns_mapping):
-    with os.scandir(run_path) as single_run_iterator:
+def gather_experiment_results(experiment_path, result_columns_mapping):
+    with os.scandir(experiment_path) as single_run_iterator:
         for single_run in single_run_iterator:
             if not single_run.is_dir():
                 continue
             run_name = get_run_name(single_run.path)
-            print(f"========= RUN: {run_name} ==============")
-            gather_graph_results(single_run.path, result_columns_mapping, run_path, run_name)
+            utility.print_banner(f"RUN: {run_name}", lines=1)
+            const_column_values = {
+                'algorithm': run_name
+            }
+            gather_graph_results(single_run.path, result_columns_mapping, experiment_path, run_name,
+                                 const_column_values=const_column_values)
 
 
 def get_run_name(single_run_path):
@@ -26,7 +29,7 @@ def get_run_name(single_run_path):
 
 
 def gather_graph_results(single_run_path, result_columns_mapping, gathered_results_path, gathered_results_name,
-                         gathered_results_suffix=".csv"):
+                         gathered_results_suffix=".csv", const_column_values=None):
     """
     Gathers the results of all tested graphs for one run configuration and saves them at gathered_results_path.
 
@@ -60,7 +63,11 @@ def gather_graph_results(single_run_path, result_columns_mapping, gathered_resul
     :param str or os.Path gathered_results_path: Base path where the results should be saved
     :param str or os.Path gathered_results_name: Base name of the created file.
     :param str gathered_results_suffix: suffix of the created file.
+    :param dict[str, str] const_column_values: use this parameter if you want to add columns with a constant value for
+                                               every row (e.g. name of the algorithm)
     """
+    if const_column_values is None:
+        const_column_values = {}
     gathered_results = []
 
     with os.scandir(single_run_path) as run_dir:
@@ -78,17 +85,30 @@ def gather_graph_results(single_run_path, result_columns_mapping, gathered_resul
 
     result_path = pathlib.Path(gathered_results_path, gathered_results_name + gathered_results_suffix)
     print(f"SAVING gathered results in {result_path}")
-    save_gathered_results(result_path, gathered_results, result_columns_mapping.keys(), quoting=csv.QUOTE_NONNUMERIC)
+
+    column_names = list(result_columns_mapping.keys())
+
+    # Add constant values to each row
+    if const_column_values is not None:
+        new_column_names = list(const_column_values.keys())
+        new_values = list(const_column_values.values())
+        column_names = new_column_names + column_names
+        for single_result in gathered_results:
+            # use slice notation to append new values in front of old values
+            single_result[:0] = new_values
+
+    save_gathered_results(result_path, gathered_results, column_names, quoting=csv.QUOTE_NONNUMERIC)
 
 
 def extract_single_results(result_json_path, result_columns_mapping):
     extracted_results = []
     with open(result_json_path) as single_result_file:
         single_result = json.load(single_result_file)
+
         for key_path in result_columns_mapping.values():
             value = utility.dict_get(single_result, key_path, path_separator=KEY_PATH_SEPARATOR)
-            if value is None:
-                raise ValueError(f"Result file at {result_json_path} is missing value for key {key_path}.")
+            # if value is None:
+            # raise ValueError(f"Result file at {result_json_path} is missing value for key {key_path}.")
             extracted_results += [value]
     return extracted_results
 
@@ -111,22 +131,21 @@ def save_gathered_results(path, gathered_results, column_names, **csv_writer_fmt
 
 if __name__ == '__main__':
     argument_parser = argparse.ArgumentParser(
-        description="A tool to gather all JSON-results from each graph for each single run in the passed directory. "
-                    "The important information is saved in one csv-file for each run.")
+        description="A tool to gather all JSON-results from each graph for each single run in the passed experiment "
+                    "directory. The important information is saved in one csv-file for each run.")
 
     argument_parser.add_argument("runs_dir", type=pathlib.Path,
                                  help="The directory in which the single runs to gather can be found.",
                                  metavar="<runs-directory>")
     argument_parser.add_argument("-c", "--config", default="./config.json", type=argparse.FileType('r'),
-                                 required=False, help="The path to the configuration file. (default='./config.json')",
+                                 required=False,
+                                 help="The path to the configuration file. It has to contain the column-key-mappings. "
+                                      "(default='./config.json')",
                                  metavar="<config>", dest="config_file_path")
     args = argument_parser.parse_args()
+    CONFIG_FILE = pathlib.Path(args.config_file_path.name)
 
-    #TODO: parse commandline config file
+    with open(CONFIG_FILE) as config_file:
+        config = json.load(config_file)
 
-    gather_run_results(args.runs_dir,
-                       {
-                           "graph": "INPUT.graph",
-                           "n": "INPUT.n",
-                           "part_time": "TIME.partitioning._"
-                       })
+    gather_experiment_results(args.runs_dir, config['gather']['column-key-mapping'])
