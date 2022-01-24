@@ -2,6 +2,7 @@
 This file contains some utility functions used by this project.
 """
 import collections.abc
+import math
 
 
 def merge_dicts_by_keys(original_dict, other_dict):
@@ -104,3 +105,18 @@ def try_parse_int_or_float(str_repr):
     except (ValueError, TypeError):
         pass  # value is neither int nor float => do nothing
     return str_repr  # if no parse was successful, return value as is
+
+
+def print_banner(text, lines=3, width=60, background="="):
+    num_eqs = ((width - len(text) - 2) / 2)
+
+    # print upper banner
+    for i in range(math.ceil((lines - 1) / 2)):
+        print(background * width)
+
+    # Print content
+    print(background * math.floor(num_eqs), text, background * math.ceil(num_eqs))
+
+    # print lower banner
+    for i in range(math.floor((lines - 1) / 2)):
+        print(background * width)
