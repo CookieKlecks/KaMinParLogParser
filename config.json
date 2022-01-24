@@ -1,14 +1,23 @@
 {
   "input": {
-    "runs-dir": "path/to/runs/directory",
+    "experiments-dir": "path/to/runs/directory",
     "log-suffix": ".log"
   },
-  "output": {
+  "parse": {
     "override": false,
     "result": {
       "format": "JSON",
       "name": "",
       "suffix": ".json"
     }
+  },
+  "gather": {
+    "column-key-mapping": {
+      "column_name": "path.to.value.in.result.json"
+    }
+  },
+  "plots": {
+    "R-command": "RScript",
+    "script": "R/create_plots.R"
   }
 }

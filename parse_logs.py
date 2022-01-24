@@ -14,7 +14,12 @@ import pathlib
 import utility
 
 
-def parse_all_logs(base_dir, log_file_suffix=".log", override=False, result_name=None, result_suffix=".json"):
+def parse_all_logs(base_dir,
+                   log_file_suffix=".log",
+                   override=False,
+                   result_name=None,
+                   result_suffix=".json",
+                   verbose=True):
     """
     Recursively walk through base_dir and parse every file ending in log_file_suffix. If override==False a log file is
     only parsed if no result name with the corresponding result name exists. Otherwise older created results are
@@ -32,6 +37,7 @@ def parse_all_logs(base_dir, log_file_suffix=".log", override=False, result_name
                             according to the current result_name and result_suffix.
     :param str result_name: The base name of the created result file. If None, the basename of the log file is taken.
     :param str result_suffix: The file suffix of the created result files.
+    :param bool verbose: if true, additional output will be generated.
     """
     print(f'Walking through: {base_dir}')
     for (dir_path, _, filenames) in os.walk(base_dir):
@@ -41,7 +47,8 @@ def parse_all_logs(base_dir, log_file_suffix=".log", override=False, result_name
                 result_path = generate_result_path(log_file, result_name, result_suffix)
                 if not override and result_path.exists():
                     continue
-                print(f'GENERATE results: {result_path}')
+                if verbose:
+                    print(f'GENERATE results: {result_path}')
                 results = parse_log(log_file)
 
                 with open(result_path, "w") as result_file:
@@ -56,7 +63,7 @@ def parse_log(log_file_path):
         while line:
             # remove \n at end of line and whitespace characters
             line = line[:-1].strip()
-            keywords = ["INPUT", "RESULT"]
+            keywords = ["CONTEXT", "INPUT", "RESULT"]
             for keyword in keywords:
                 if line.startswith(keyword):
                     results[keyword] = parse_key_value_pairs(line[len(keyword) + 1:])
@@ -128,14 +135,14 @@ if __name__ == '__main__':
         config = json.load(config_file)
 
     # INPUT configs
-    RUNS_DIR = pathlib.Path(config['input']['runs-dir'])
+    EXPERIMENTS_DIR = pathlib.Path(config['input']['experiments-dir'])
     LOG_FILE_SUFFIX = config['input']['log-suffix']
 
-    # OUTPUT configs
-    RESULT_OVERRIDE = config['output']['override']
-    RESULT_NAME = config['output']['result']['name']
+    # PARSE configs
+    RESULT_OVERRIDE = config['parse']['override']
+    RESULT_NAME = config['parse']['result']['name']
     if RESULT_NAME == "":
         RESULT_NAME = None
-    RESULT_SUFFIX = config['output']['result']['suffix']
+    RESULT_SUFFIX = config['parse']['result']['suffix']
 
-    parse_all_logs(RUNS_DIR, LOG_FILE_SUFFIX, RESULT_OVERRIDE, RESULT_NAME, RESULT_SUFFIX)
+    parse_all_logs(EXPERIMENTS_DIR, LOG_FILE_SUFFIX, RESULT_OVERRIDE, RESULT_NAME, RESULT_SUFFIX)
