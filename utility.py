@@ -46,6 +46,24 @@ def merge_dicts_by_keys(original_dict, other_dict):
     return merge
 
 
+def dict_path_to_array(path, path_separator="."):
+    """
+    Transforms a with a specified separator separated key path into an array containing the individual keys of every
+    nested level.
+    If the path is already a list it is directly returned.
+
+    :param str or list path: the path that should be parsed
+    :param str path_separator: separator that separates keys of different levels.
+    :return: a list containing the keys for each nested level.
+    """
+    if isinstance(path, str):
+        return path.split(path_separator)
+    if not isinstance(path, collections.abc.Sequence):
+        raise TypeError(
+            f"only paths with type 'list' or 'str' are allowed. You provided '{path}' with type '{type(path)}'")
+    return path
+
+
 def dict_get(dictionary, path, default=None, path_separator="."):
     """
     Gets the (possibly nested) value at the provided path in the provided dictionary.
@@ -65,13 +83,7 @@ def dict_get(dictionary, path, default=None, path_separator="."):
     :param str path_separator: separator to separate nested keys in a path.
     :return: The value of the given dictionary at the given path, or default, if this value does not exist.
     """
-    cur_path = path
-
-    if isinstance(path, str):
-        cur_path = path.split(path_separator)
-    if not isinstance(cur_path, collections.abc.Sequence):
-        raise TypeError(
-            f"only paths with type 'list' or 'str' are allowed. You provided '{path}' with type '{type(path)}'")
+    cur_path = dict_path_to_array(path, path_separator)
 
     key = cur_path[0]
     rest_path = cur_path[1:]
@@ -84,6 +96,26 @@ def dict_get(dictionary, path, default=None, path_separator="."):
         # further searching
         return dict_get(value, rest_path, default=default, path_separator=path_separator)
     return value
+
+
+def dict_set(dictionary, path, new_value, path_separator="."):
+    """
+    Sets the value of a directory at a given path. See dict_get to see what paths are allowed.
+
+    :param dict dictionary: the dictionary whose value should be updated.
+    :param path: Path specifying which value should be updated.
+    :param new_value: the new value for the given path.
+    :param path_separator: separator to separate nested keys in a path.
+    """
+    cur_path = dict_path_to_array(path, path_separator)
+
+    key = cur_path[0]
+    rest_path = cur_path[1:]
+
+    if len(rest_path) == 0:
+        dictionary[key] = new_value
+    else:
+        dict_set(dictionary[key], rest_path, new_value, path_separator)
 
 
 def try_parse_int_or_float(str_repr):
