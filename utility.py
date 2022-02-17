@@ -14,7 +14,8 @@ def merge_dicts_by_keys(original_dict, other_dict):
             - if orig_a and other_a are both dicts, they are merged via this method
             - if exactly one of them (let it be orig_a) is not a dict, following dict is constructed:
                 {'_': orig_a, **other_a}
-            - if both are no dict, other_a overrides the original value.
+            - if both are no dict, the values are contained in a list [orig_a, other_a]. If orig_a is already a list
+                other_a is appended, otherwise a new list is created.
 
     :param dict[str, Any] original_dict: the original dictionary which builds the source of the merge. Values in
                                          original_dict can be overridden by other_dict if both have non-dict values for
@@ -27,7 +28,9 @@ def merge_dicts_by_keys(original_dict, other_dict):
     if not isinstance(original_dict, collections.abc.MutableMapping) and not isinstance(other_dict,
                                                                                         collections.abc.MutableMapping):
         # two values for the exact same key => other_dict overrides key in original_dict
-        return other_dict
+        if isinstance(original_dict, list):
+            return original_dict + [other_dict]
+        return [original_dict, other_dict]
     if not isinstance(original_dict, collections.abc.MutableMapping):
         # original_dict has direct value and other_dict has further nested keys => original_dict becomes "source" value
         # by assigning it to the key '_' for the resulting merged dict.
