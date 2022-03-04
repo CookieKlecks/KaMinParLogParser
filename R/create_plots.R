@@ -36,7 +36,8 @@ for (experiment_dir in list_experiments) {
   if(!file.exists(paste(experiment_dir, pp_plot_name, sep = "/")) 
      || override) {
     create_performance_profile_plot(experiment_dir = experiment_dir,
-                                    plot_file_name = "performance_profile.pdf")
+                                    plot_file_name = pp_plot_name,
+                                    timelimit = 90000)
     print(" |___ created PERFORMANCE PROFILE plot", quote = F)
   } else {
     print(" |___ Performance plot ALREADY EXISTS", quote = F)
