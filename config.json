@@ -16,6 +16,7 @@
     "path.to.value.list": "success_percentage"
   },
   "gather": {
+    "array-separator": ";",
     "column-key-mapping": {
       "column_name": "path.to.value.in.result.json"
     }

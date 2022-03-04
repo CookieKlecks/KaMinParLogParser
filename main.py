@@ -37,6 +37,7 @@ if __name__ == "__main__":
     AGGREGATE = config['aggregate']
 
     GATHER_COLUMN_KEY_MAPPINGS = config['gather']['column-key-mapping']
+    GATHER_ARRAY_SEPARATOR = config['gather']['array-separator']
 
     with os.scandir(EXPERIMENTS_BASE_DIR) as experiments_dir_iterator:
         for experiment_dir in experiments_dir_iterator:
@@ -54,7 +55,7 @@ if __name__ == "__main__":
 
             print()
             utility.print_banner("GATHER results:", lines=1)
-            gather_results.gather_experiment_results(experiment_dir, GATHER_COLUMN_KEY_MAPPINGS)
+            gather_results.gather_experiment_results(experiment_dir, GATHER_COLUMN_KEY_MAPPINGS, GATHER_ARRAY_SEPARATOR)
             print("\n")
 
     utility.print_banner("CREATE plots:", lines=5)

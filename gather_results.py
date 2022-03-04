@@ -10,7 +10,7 @@ JSON_SUFFIX = '.json'
 KEY_PATH_SEPARATOR = '.'
 
 
-def gather_experiment_results(experiment_path, result_columns_mapping):
+def gather_experiment_results(experiment_path, result_columns_mapping, array_separator):
     with os.scandir(experiment_path) as single_run_iterator:
         for single_run in single_run_iterator:
             if not single_run.is_dir():
@@ -21,7 +21,7 @@ def gather_experiment_results(experiment_path, result_columns_mapping):
                 'algorithm': run_name
             }
             gather_graph_results(single_run.path, result_columns_mapping, experiment_path, run_name,
-                                 const_column_values=const_column_values)
+                                 array_separator=array_separator, const_column_values=const_column_values)
 
 
 def get_run_name(single_run_path):
@@ -29,7 +29,7 @@ def get_run_name(single_run_path):
 
 
 def gather_graph_results(single_run_path, result_columns_mapping, gathered_results_path, gathered_results_name,
-                         gathered_results_suffix=".csv", const_column_values=None):
+                         array_separator=';', gathered_results_suffix=".csv", const_column_values=None):
     """
     Gathers the results of all tested graphs for one run configuration and saves them at gathered_results_path.
 
@@ -62,6 +62,7 @@ def gather_graph_results(single_run_path, result_columns_mapping, gathered_resul
     :param result_columns_mapping: dictionary, mapping column names in the result to paths in the JSON files.
     :param str or os.Path gathered_results_path: Base path where the results should be saved
     :param str or os.Path gathered_results_name: Base name of the created file.
+    :param str array_separator: string that separates two elements of an array value.
     :param str gathered_results_suffix: suffix of the created file.
     :param dict[str, str] const_column_values: use this parameter if you want to add columns with a constant value for
                                                every row (e.g. name of the algorithm)
@@ -81,7 +82,8 @@ def gather_graph_results(single_run_path, result_columns_mapping, gathered_resul
                     if not pathlib.Path(result_file).suffix == JSON_SUFFIX:
                         continue
                     # result_file is actual a .json file => extract the contained results
-                    gathered_results += [extract_single_results(result_file.path, result_columns_mapping)]
+                    gathered_results += [
+                        extract_single_results(result_file.path, result_columns_mapping, array_separator)]
 
     result_path = pathlib.Path(gathered_results_path, gathered_results_name + gathered_results_suffix)
     print(f"SAVING gathered results in {result_path}")
@@ -100,7 +102,7 @@ def gather_graph_results(single_run_path, result_columns_mapping, gathered_resul
     save_gathered_results(result_path, gathered_results, column_names, quoting=csv.QUOTE_NONNUMERIC)
 
 
-def extract_single_results(result_json_path, result_columns_mapping):
+def extract_single_results(result_json_path, result_columns_mapping, array_separator):
     extracted_results = []
     with open(result_json_path) as single_result_file:
         single_result = json.load(single_result_file)
@@ -109,6 +111,8 @@ def extract_single_results(result_json_path, result_columns_mapping):
             value = utility.dict_get(single_result, key_path, path_separator=KEY_PATH_SEPARATOR)
             # if value is None:
             # raise ValueError(f"Result file at {result_json_path} is missing value for key {key_path}.")
+            if isinstance(value, list):
+                value = array_separator.join(map(str, value))
             extracted_results += [value]
     return extracted_results
 
@@ -148,4 +152,5 @@ if __name__ == '__main__':
     with open(CONFIG_FILE) as config_file:
         config = json.load(config_file)
 
-    gather_experiment_results(args.runs_dir, config['gather']['column-key-mapping'])
+    gather_experiment_results(args.runs_dir, config['gather']['column-key-mapping'],
+                              config['gather']['array-separator'])
