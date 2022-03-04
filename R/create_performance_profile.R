@@ -5,7 +5,38 @@ source("utility.R")
 
 
 
-
+#' Creates the performance profile plot for a single experiment
+#' 
+#' This function reads all .csv files in one directory and uses this data to
+#' create a performance profile plot. It uses the experimental_plot_scripts
+#' external library and its function performance_plot.
+#' 
+#' The result is saved in the directory of the experiment with the given name.
+#'
+#' @param experiment_dir path to the directory where all .csv-files of the
+#' experiment are located. The result is saved in this directory.
+#' @param plot_file_name file name of the resulting plot.
+#' @param timelimit the time limit that should be used to identify time outs.
+#' @param epsilon the used epsilon
+#'
+#' @return nothing. The plot is saved in the experiment_dir with the given
+#' plot_file_name.
+#'
+#' @examples
+#' Let 'experiment' be a directory in the current working directory with
+#' following content:
+#' ./experiment
+#'    |___ method_1.csv
+#'    |___ method_2.csv
+#'    |___ method_3.csv
+#'     
+#' To create the performance profile to compare method 1 to 3:
+#' 
+#' create_performance_profile_plot("./experiment", "performance_profile.pdf")
+#' 
+#' The resulting plot is saved in the file:
+#' ./experiment/performance_profile.pdf
+#' 
 create_performance_profile_plot <- function(experiment_dir, 
                                             plot_file_name, 
                                             timelimit = 7200) {
