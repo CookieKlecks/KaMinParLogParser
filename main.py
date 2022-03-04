@@ -27,12 +27,14 @@ if __name__ == "__main__":
 
     OVERRIDE = config['parse']['override']
 
+    KEYWORDS = config['parse']['keywords']
     RESULT_FORMAT = config['parse']['result']['format']
     RESULT_NAME = config['parse']['result']['name']
     if RESULT_NAME == "":
         # empty string is interpreted that the name of the graph should be used as result name
         RESULT_NAME = None
     RESULT_SUFFIX = config['parse']['result']['suffix']
+    AGGREGATE = config['aggregate']
 
     GATHER_COLUMN_KEY_MAPPINGS = config['gather']['column-key-mapping']
 
@@ -42,6 +44,8 @@ if __name__ == "__main__":
             print()
             utility.print_banner("PARSE logs:", lines=1)
             parse_logs.parse_all_logs(base_dir=experiment_dir.path,
+                                      keywords=KEYWORDS,
+                                      aggregate_values_dict=AGGREGATE,
                                       log_file_suffix=LOG_SUFFIX,
                                       override=OVERRIDE,
                                       result_name=RESULT_NAME,

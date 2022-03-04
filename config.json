@@ -5,11 +5,15 @@
   },
   "parse": {
     "override": false,
+    "keywords": ["CONTEXT", "INPUT", "RESULT"],
     "result": {
       "format": "JSON",
       "name": "",
       "suffix": ".json"
     }
+  },
+  "aggregate": {
+    "path.to.value.list": "success_percentage"
   },
   "gather": {
     "column-key-mapping": {

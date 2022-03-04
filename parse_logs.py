@@ -12,9 +12,12 @@ import os
 import argparse
 import pathlib
 import utility
+import aggregate
 
 
 def parse_all_logs(base_dir,
+                   keywords,
+                   aggregate_values_dict=None,
                    log_file_suffix=".log",
                    override=False,
                    result_name=None,
@@ -28,9 +31,14 @@ def parse_all_logs(base_dir,
     stated in a log file. The result file is saved in the same directory as the log file. The base name is hereby the
     same as the log file, if result_name==None, otherwise it equals the passed result_name. The suffix can also be
     controlled via the result_suffix parameter.
-    
+
     :param base_dir: Path to the base directory from which the recursive parsing should be started.
     :type base_dir: str or Path
+    :param list[str] keywords: list of keywords with which the important lines start.
+    :param dict aggregate_values_dict: a dictionary stated which values should be aggregated after reading the logs.
+                            The keys in the dict represent a .-separated key path to a value.
+                            The corresponding values are strings, that state the aggregate method.
+                            To see how values are aggregated @see aggregate::aggregate_parsed_logs
     :param str log_file_suffix: File suffix to identify a log file.
     :param bool override: Whether existing result files should be overridden, or logs with existing result files
                             should  be skipped. NOTE: existing result files are only identified if they are named
@@ -49,13 +57,16 @@ def parse_all_logs(base_dir,
                     continue
                 if verbose:
                     print(f'GENERATE results: {result_path}')
-                results = parse_log(log_file)
+                results = parse_log(log_file, keywords)
+
+                if aggregate_values_dict is not None:
+                    results = aggregate.aggregate_parsed_logs(results, aggregate_values_dict)
 
                 with open(result_path, "w") as result_file:
                     json.dump(results, result_file, sort_keys=True, indent=4)
 
 
-def parse_log(log_file_path):
+def parse_log(log_file_path, keywords):
     with open(log_file_path) as log_file:
         line = log_file.readline().strip()
 
@@ -63,10 +74,13 @@ def parse_log(log_file_path):
         while line:
             # remove \n at end of line and whitespace characters
             line = line[:-1].strip()
-            keywords = ["CONTEXT", "INPUT", "RESULT"]
             for keyword in keywords:
                 if line.startswith(keyword):
-                    results[keyword] = parse_key_value_pairs(line[len(keyword) + 1:])
+                    parsed_object = parse_key_value_pairs(line[len(keyword) + 1:])
+                    if keyword in results.keys():
+                        results[keyword] = utility.merge_dicts_by_keys(results[keyword], parsed_object)
+                    else:
+                        results[keyword] = parsed_object
                     break
             # parse time
             if line.startswith("io="):
@@ -140,9 +154,12 @@ if __name__ == '__main__':
 
     # PARSE configs
     RESULT_OVERRIDE = config['parse']['override']
+    KEYWORDS = config['parse']['keywords']
     RESULT_NAME = config['parse']['result']['name']
     if RESULT_NAME == "":
         RESULT_NAME = None
     RESULT_SUFFIX = config['parse']['result']['suffix']
 
-    parse_all_logs(EXPERIMENTS_DIR, LOG_FILE_SUFFIX, RESULT_OVERRIDE, RESULT_NAME, RESULT_SUFFIX)
+    AGGREGATE = config['aggregate']
+
+    parse_all_logs(EXPERIMENTS_DIR, KEYWORDS, AGGREGATE, LOG_FILE_SUFFIX, RESULT_OVERRIDE, RESULT_NAME, RESULT_SUFFIX)
