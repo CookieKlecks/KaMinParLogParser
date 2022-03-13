@@ -85,3 +85,74 @@ read_and_aggregate_csv <- function(experiment_dir,
   
   return(dataframes)
 }
+
+
+
+# ==================== Manipulate Graph scales ================================
+
+#' This function returns a function that can be used as 'breaks' argument in 
+#' scale_*_continuous(). 
+#' The returned function creates the breaks for a scale as follows: 
+#' 
+#' Firstly the default breaks are calculated via scales::extended_breaks.
+#' Then the passed conditionFunc is called with the current limits. If this
+#' function returns true, the passed newBreakPoint is added to the default 
+#' breaks. Otherwise the default breaks are returned as they are.
+#'
+#' @param newBreakPoint The new break that should be added to the default breaks
+#' @param conditionFunc function that accepts the limits and returns a boolean.
+#'                      If this function evaluates true, the new break is added
+#'                      to the default breaks
+#' @param n directly passed to scales::extended_breaks
+#' @param ... directly passed to scales::extended_breaks
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' 
+#' # add a new break add 4.5 if lower limit is lower or equal to 4.5
+#' 
+#' checkLimit <- function(limits) limits[[1]] <= 4.5
+#' customBreakFunction <- add_conditional_break(4.5, conditionFunc = checkLimit)
+#' ggplot(iris, aes(Sepal.Width, Sepal.Length)) +
+#'   scale_y_continuous(breaks = customBreakFunction) +
+#'   geom_point()
+#'   
+add_conditional_break <- function(newBreakPoint, conditionFunc = true, n = 5, ...) {
+  return(function(limits) {
+    default_breaks <- scales::extended_breaks(n, ...)(limits)
+    
+    # check if new break point should be included
+    if (conditionFunc(limits)) {
+      extended_breaks <- c(newBreakPoint, default_breaks)
+      return(extended_breaks)
+    }
+    
+    return(default_breaks)
+  })
+}
+
+
+#' This function creates a function that takes break points of a scale as input,
+#' replaces the given break point with the given label and returns this.
+#' It can be used in scales_*_continuous() as custom labeller (labels=).
+#' The resulting effect is then, that the given break point (breakPoint) has
+#' the given label (replaceLabelWith). The other break points are labelled as
+#' they are.
+#' 
+#' If the given break point does not exist in the break points, nothing happens.
+#'
+#' @param breakPoint the break point of which the label should be replaced.
+#' @param newLabel the label that should be used for this break point.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+replace_label <- function(breakPoint, newLabel) {
+  return(function(breaks) {
+    breaks[breaks == breakPoint] <- newLabel
+    return(breaks)
+  })
+}
