@@ -4,8 +4,8 @@
     "log-suffix": ".log"
   },
   "parse": {
-    "override": false,
-    "keywords": ["CONTEXT", "INPUT", "RESULT"],
+    "override": true,
+    "keywords": ["CONTEXT", "INPUT", "RESULT", "REFINEMENT_SOLUTION", "ILP_SOLUTION", "PROMISING_CLUSTER_STATS", "GUROBI_PARTIAL_SOLUTION"],
     "result": {
       "format": "JSON",
       "name": "",
@@ -13,12 +13,34 @@
     }
   },
   "aggregate": {
-    "path.to.value.list": "success_percentage"
+    "ILP_SOLUTION.reached_time_limit": "success_percentage"
   },
   "gather": {
     "array-separator": ";",
     "column-key-mapping": {
-      "column_name": "path.to.value.in.result.json"
+      "graph": "INPUT.graph",
+      "seed": "CONTEXT.seed",
+      "k": "INPUT.k",
+      "epsilon": "CONTEXT.partition.epsilon",
+      "num_threads": "CONTEXT.parallel.num_threads",
+      "max_non_zeroes": "CONTEXT.refinement.ilp.max_non_zeroes",
+      "imbalance": "RESULT.imbalance",
+      "totalPartitionTime": "TIME.partitioning._",
+      "solver_timed_out": "ILP_SOLUTION.reached_time_limit",
+      "solver_runtime": "ILP_SOLUTION.runtime",
+      "solver_runtime_limit": "CONTEXT.refinement.ilp.time_limit",
+      "partial_gains": "GUROBI_PARTIAL_SOLUTION.cur_best",
+      "partial_runtime": "GUROBI_PARTIAL_SOLUTION.elapsed_time",
+      "partial_objective": "GUROBI_PARTIAL_SOLUTION.objective",
+      "partial_ilp_id": "GUROBI_PARTIAL_SOLUTION.ilp_id",
+      "gains": "ILP_SOLUTION.gain",
+      "ilp_id": "ILP_SOLUTION.ilp_id",
+      "cluster_sizes": "PROMISING_CLUSTER_STATS.cluster_size",
+      "km1": "RESULT.cut",
+      "cut": "RESULT.cut"
+    },
+    "merge-method": {
+
     }
   },
   "plots": {
