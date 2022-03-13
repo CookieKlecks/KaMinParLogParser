@@ -108,6 +108,141 @@ create_gains_density_plot <- function(experiment_dir,
 }
 
 
+
+
+#' This function creates a plot, that shows the evolution of the currently best
+#' found solution depending on the running time of each individual ILP run.
+#' 
+#' It is faceted on the different algorithms and different graphs.
+#' Therefore for each algorithm-graph-pair one plot is created, that contains
+#' for each individual ILP run one line. The end of each line represents the 
+#' finally found solution and is marked with a diamond.
+#' 
+#' NOTE: For each instance only the runs with the minimum seed and maximum k is
+#' used, as it is difficult to aggregate different runs, because it is not 
+#' really possible to map individual ILP runs to each other.
+#'
+#' @param experiment_dir 
+#' @param plot_file_name 
+#' @param scatter_plot_file_name 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+create_partial_gains_evolution_plot <- function(experiment_dir,
+                                                plot_file_name,
+                                                scatter_plot_file_name) {
+  output_dir <- experiment_dir
+  complete_data <- read_csv_into_df(experiment_dir)
+  
+  # remove rows were no partial gains data is given (e.g. label propagation)
+  complete_data <- na.omit(complete_data, cols=c("gains", "partial_gains"))
+  
+  if (length(row.names(complete_data)) == 0) {
+    warning(paste("Skipped creating partial gains evolution plot for", basename(experiment_dir), ", because no gains data exists."))
+    return()
+  }
+   
+  # restrict to one seed and one k. This is to avoid over plotting.
+  complete_data <- filter(complete_data, seed == min(seed))
+  complete_data <- filter(complete_data, k == max(k))
+  
+  # split ';' separated partial gains into several rows (using tidyr)
+  # Each row represents one partial solution.
+  partial_points <- separate_rows(complete_data, partial_gains, partial_runtime,
+                                  partial_objective, partial_ilp_id, 
+                                  sep = ";", convert = T)
+  
+  # ignore balance objective solutions
+  partial_points <- filter(partial_points, partial_objective == 1)
+  
+  
+  # Get the final solutions for each ILP run to draw each line until the solver 
+  # actually stopped.
+  final_points <- separate_rows(complete_data, gains, solver_runtime, ilp_id, 
+                                sep = ";", convert = T)
+  # set final points as partial points to easily handle them together
+  final_points[c("partial_gains", "partial_runtime", "partial_ilp_id")] <- 
+    final_points[c("gains", "solver_runtime", "ilp_id")]
+  final_points$partial_objective <- 1 # to stay compliant with partial points
+  
+  
+  all_points <- rbind(partial_points, final_points)
+  
+  # ================= Custom aesthetic function ===============================
+  #' This function calculates for each ilp_id of graph g and algorithm a 
+  #' following value:
+  #'     r := ilp_id / max_g_a(ilp_id)
+  #'     
+  #' where max_g_a(ilp_id) is the maximum ILP id of the calculations of graph g
+  #' and algorithm a.
+  #' This ratio is used to color the lines of each graph-algorithm-panel 
+  #' indiviually.
+  #'     
+  get_color <- function(ilp_ids, graphs, algorithms) {
+    max_ilp_ids <- ddply(all_points, .(graph, algorithm), function(df) 
+      data.frame(graph = min(df$graph), 
+                 algorithm = min(df$algorithm), 
+                 max_id = max(df$partial_ilp_id))
+    )
+    
+    ids_with_max <- left_join(data.frame(ilp_id = ilp_ids, 
+                                         graph = graphs, 
+                                         algorithm = algorithms), 
+                              max_ilp_ids,
+                              by = c("graph", "algorithm"))
+    id_colors <- ids_with_max$ilp_id / ids_with_max$max_id
+    return(id_colors)
+  }
+  
+  # cap negative gains at -1 to improve plot readability
+  all_points$partial_gains[all_points$partial_gains < -1] <- -1
+  
+  
+  # =========================== CREATE PLOT ===================================
+  isLimitNegative <- function(limits) min(limits) <= -1
+  
+  ggplot(all_points, aes(x = partial_runtime, y = partial_gains, color = get_color(partial_ilp_id, graph, algorithm))) +
+    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free") +
+    scale_y_continuous(trans = "pseudo_log") +
+    geom_point(data = final_points, aes(group = partial_ilp_id), pch = 18, show.legend = F) +
+    geom_line(aes(group = partial_ilp_id), alpha = 0.6, lineend = "square", show.legend = F)
+  
+  # Save graph in file
+  algo_count <- length(unique(complete_data$algorithm))
+  graph_count <- length(unique(complete_data$graph))
+  ggsave(plot_file_name, path=output_dir, 
+         width = 10 * algo_count + 5, 
+         height = 10 * graph_count, 
+         unit = "cm", limitsize = F)
+  
+  
+  # ======================= CREATE SCATTER PLOT ===============================
+  
+  get_diff <- function(df) {
+    sorted <- df[order(df$partial_runtime, decreasing = F),]
+    gains <- sorted$partial_gains
+    sorted$partial_diff <- c(gains[1], gains[2:length(gains)] - gains[1:length(gains) - 1])
+    return(sorted)
+  }
+  
+  
+  all_points_diff <- ddply(all_points, .(graph, algorithm, partial_ilp_id), get_diff)
+  
+  ggplot(all_points_diff, aes(x = partial_runtime, y = partial_diff)) +
+    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free") +
+    #scale_y_continuous(trans = "pseudo_log") +
+    geom_point(aes(group = partial_ilp_id), pch = 18, show.legend = F)
+  
+  # Save graph in file
+  ggsave(scatter_plot_file_name, path=output_dir, 
+         width = 10 * algo_count + 5, 
+         height = 10 * graph_count, 
+         unit = "cm", limitsize = F)
+}
+
+
 #experiment_dir <- "C:/Users/Cedrico.DESKTOP-3BCMGI6/KIT/BA/experiments/test_results/001eps-Cluster_no_min_gain_2022-02-12_0"
 
 #create_timed_out_ilp_plot(experiment_dir, "test.pdf")

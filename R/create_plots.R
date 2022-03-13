@@ -93,6 +93,21 @@ for (experiment_dir in list_experiments) {
   }
   # ==========================================================
   
+  # ============= PARTIAL ILP GAINS EVOLUTION =====================
+  file_name <- "partial_ilp_gains_evolution.pdf"
+  scatter_file_name <- "partial_ilp_gains_scatter.pdf"
+  
+  if(!file.exists(paste(experiment_dir, file_name, sep = "/")) 
+     || override) {
+    create_partial_gains_evolution_plot(experiment_dir = experiment_dir,
+                                        plot_file_name = file_name,
+                                        scatter_plot_file_name = scatter_file_name)
+    print(" |___ created PARTIAL ILP GAINS EVOLUTION plot", quote = F)
+  } else {
+    print(" |___ Partial ILP gains evolution plot ALREADY EXISTS", quote = F)
+  }
+  # ==========================================================
+  
   # ========== PROMISING CLUSTER SIZE HISTOGRAM ==============
   file_name <- "cluster_size_histogram.pdf"
   
