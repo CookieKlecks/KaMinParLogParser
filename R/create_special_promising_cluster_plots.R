@@ -44,7 +44,8 @@ transform_special_cluster_data <- function(complete_data,
 create_cluster_size_histogram <- function(experiment_dir,
                                           output_dir,
                                           plot_file_name) {
-  complete_data <- read_csv_into_df(experiment_dir)
+  complete_data <- read_csv_into_df(experiment_dir) %>%
+    dplyr::select(algorithm, graph, k, epsilon, gains, cluster_sizes, solver_runtime, solver_runtime_limit)
   # remove rows were no gains data is given (e.g. label propagation)
   complete_data <- na.omit(complete_data, cols=c("gains", "cluster_sizes", "solver_runtime"))
   if (length(row.names(complete_data)) == 0 || !("cluster_sizes" %in% colnames(complete_data))) {
@@ -71,7 +72,8 @@ create_gains_per_cluster_scatter_plot <- function(experiment_dir,
                                                   output_dir,
                                                   plot_file_name,
                                                   override) {
-  complete_data <- read_csv_into_df(experiment_dir)
+  complete_data <- read_csv_into_df(experiment_dir) %>%
+    dplyr::select(algorithm, graph, k, epsilon, gains, cluster_sizes, solver_runtime, solver_runtime_limit)
   # remove rows were no gains data is given (e.g. label propagation)
   complete_data <- na.omit(complete_data, cols=c("gains", "cluster_sizes", "solver_runtime"))
   if (length(row.names(complete_data)) == 0 || !("cluster_sizes" %in% colnames(complete_data))) {
@@ -128,7 +130,9 @@ create_gains_per_cluster_scatter_plot <- function(experiment_dir,
 create_avg_gain_per_cluster_plot <- function(experiment_dir,
                                              output_dir,
                                              plot_file_name) {
-  complete_data <- read_csv_into_df(experiment_dir)
+  complete_data <- read_csv_into_df(experiment_dir) %>%
+    # only select necessary columns, as too many resulted in no rows after na.omit
+    dplyr::select(algorithm, graph, k, epsilon, gains, cluster_sizes, solver_runtime, solver_runtime_limit)
   # remove rows were no gains data is given (e.g. label propagation)
   complete_data <- na.omit(complete_data, cols=c("gains", "cluster_sizes", "solver_runtime"))
   if (length(row.names(complete_data)) == 0 || !("cluster_sizes" %in% colnames(complete_data))) {
@@ -157,7 +161,9 @@ create_avg_gain_per_cluster_plot <- function(experiment_dir,
 create_avg_runtime_per_cluster_plot <- function(experiment_dir,
                                                 output_dir,
                                                 plot_file_name) {
-  complete_data <- read_csv_into_df(experiment_dir)
+  complete_data <- read_csv_into_df(experiment_dir) %>%
+    # only select necessary columns, as too many resulted in no rows after na.omit
+    dplyr::select(algorithm, graph, k, epsilon, gains, cluster_sizes, solver_runtime, solver_runtime_limit)
   # remove rows were no gains data is given (e.g. label propagation)
   complete_data <- na.omit(complete_data, cols=c("gains", "cluster_sizes", "solver_runtime"))
   if (length(row.names(complete_data)) == 0 || !("cluster_sizes" %in% colnames(complete_data))) {
@@ -182,7 +188,7 @@ create_avg_runtime_per_cluster_plot <- function(experiment_dir,
 }
 
 
-experiment_dir <- "C:/Users/Cedrico.DESKTOP-3BCMGI6/KIT/BA/experiments/test_results/Cluster_Stats_2022-02-24_0"
+# experiment_dir <- "C:/Users/Cedrico.DESKTOP-3BCMGI6/KIT/BA/experiments/test_results/Cluster_Stats_2022-02-24_0"
 
 #("C:/Users/Cedrico.DESKTOP-3BCMGI6/KIT/BA/experiments/test_results/Cluster_Stats_2022-02-24_0", "test_scatter.pdf", T)
 

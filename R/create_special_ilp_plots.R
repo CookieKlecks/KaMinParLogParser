@@ -30,7 +30,8 @@ create_timed_out_ilp_plot <- function(experiment_dir,
   # import these .csv files into one single data frame
   combined_data <- data.frame()
   for (result in result_files) {
-    raw_data <- read.csv(result, header = TRUE)
+    raw_data <- read.csv(result, header = TRUE) %>%
+      dplyr::select(algorithm, graph, k, epsilon, num_threads, max_non_zeroes, solver_timed_out)
     if (!"solver_timed_out" %in% colnames(raw_data)) {
       # this avoids warnings when averaging the solver_timed_out column
       next
@@ -82,7 +83,8 @@ create_timed_out_ilp_plot <- function(experiment_dir,
 
 create_gains_density_plot <- function(experiment_dir,
                                       plot_file_name) {
-  complete_data <- read_csv_into_df(experiment_dir)
+  complete_data <- read_csv_into_df(experiment_dir) %>%
+    dplyr::select(algorithm, graph, gains)
   
   # remove rows were no gains data is given (e.g. label propagation)
   complete_data <- na.omit(complete_data, cols="gains")
@@ -136,7 +138,8 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
                                                 scatter_plot_file_name,
                                                 n_th_improvment_file_name) {
   output_dir <- experiment_dir
-  complete_data <- read_csv_into_df(experiment_dir)
+  complete_data <- read_csv_into_df(experiment_dir) %>% 
+    dplyr::select(algorithm, graph, seed, k, partial_gains, partial_runtime, partial_objective, partial_ilp_id, gains, solver_runtime, solver_runtime_limit, ilp_id)
   
   # remove rows were no partial gains data is given (e.g. label propagation)
   complete_data <- na.omit(complete_data, cols=c("gains", "partial_gains"))
