@@ -210,7 +210,10 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
   
   ggplot(all_points, aes(x = partial_runtime, y = partial_gains, color = get_color(partial_ilp_id, graph, algorithm))) +
     facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free") +
-    scale_y_continuous(trans = "pseudo_log") +
+    scale_y_continuous(trans = "pseudo_log",  # logarithmic scale
+                       breaks = add_conditional_break(-1, isLimitNegative),  # if negative points exists, force break point at -1
+                       labels = replace_label(-1, "negative")  # set the label of the break point -1 to negative (to indicate, that at -1 was capped)
+                       ) +
     geom_point(data = final_points, aes(group = partial_ilp_id), pch = 18, show.legend = F) +
     geom_line(aes(group = partial_ilp_id), alpha = 0.6, lineend = "square", show.legend = F)
   
@@ -227,6 +230,7 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
   
   get_diff <- function(df) {
     sorted <- df[order(df$partial_runtime, decreasing = F),]
+    sorted$number_improvement <- 0:(nrow(df) - 1)
     gains <- sorted$partial_gains
     sorted$partial_diff <- c(gains[1], gains[2:length(gains)] - gains[1:length(gains) - 1])
     return(sorted)
@@ -236,9 +240,9 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
   all_points_diff <- ddply(all_points, .(graph, algorithm, partial_ilp_id), get_diff)
   
   ggplot(all_points_diff, aes(x = partial_runtime, y = partial_diff)) +
-    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free") +
-    #scale_y_continuous(trans = "pseudo_log") +
-    geom_point(aes(group = partial_ilp_id), pch = 18, show.legend = F)
+    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free_x") +
+    scale_y_continuous(trans = "pseudo_log") +
+    geom_point(aes(color = (number_improvement)))
   
   # Save graph in file
   ggsave(scatter_plot_file_name, path=output_dir, 
