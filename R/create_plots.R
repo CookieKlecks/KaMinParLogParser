@@ -96,15 +96,43 @@ for (experiment_dir in list_experiments) {
   # ============= PARTIAL ILP GAINS EVOLUTION =====================
   file_name <- "partial_ilp_gains_evolution.pdf"
   scatter_file_name <- "partial_ilp_gains_scatter.pdf"
+  n_th_improvment_name <- "n_th_improvement_plot.pdf"
   
   if(!file.exists(paste(experiment_dir, file_name, sep = "/")) 
      || override) {
     create_partial_gains_evolution_plot(experiment_dir = experiment_dir,
                                         plot_file_name = file_name,
-                                        scatter_plot_file_name = scatter_file_name)
+                                        scatter_plot_file_name = scatter_file_name,
+                                        n_th_improvment_file_name = n_th_improvment_name)
     print(" |___ created PARTIAL ILP GAINS EVOLUTION plot", quote = F)
   } else {
     print(" |___ Partial ILP gains evolution plot ALREADY EXISTS", quote = F)
+  }
+  # ==========================================================
+  
+  # ============= ILP LOCAL GAINS vs CONFLICT VALUE =====================
+  file_name <- "conflict_vs_local_gains.pdf"
+  
+  if(!file.exists(paste(experiment_dir, file_name, sep = "/")) 
+     || override) {
+    create_conflict_vs_local_gain_plot(experiment_dir = experiment_dir,
+                                       plot_file_name = file_name)
+    print(" |___ created ILP CONFLICT vs LOCAL GAINS plot", quote = F)
+  } else {
+    print(" |___ ILP conflict vs local gains plot ALREADY EXISTS", quote = F)
+  }
+  # ==========================================================
+  
+  # ============= ILP FRACTION GAINS per IMPROVEMENT =====================
+  file_name <- "fraction_gains_per_improvement.pdf"
+  
+  if(!file.exists(paste(experiment_dir, file_name, sep = "/")) 
+     || override) {
+    create_fraction_gain_per_improvement_plot(experiment_dir = experiment_dir,
+                                              plot_file_name = file_name)
+    print(" |___ created ILP FRACTION GAINS PER IMPROVEMENT plot", quote = F)
+  } else {
+    print(" |___ ILP fraction gain per improvement plot ALREADY EXISTS", quote = F)
   }
   # ==========================================================
   

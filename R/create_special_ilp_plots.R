@@ -5,6 +5,7 @@ library(dplyr)
 library(dtplyr)
 library(RColorBrewer)
 library(tidyr)
+library(ggrepel)
 
 source("utility.R")
 
@@ -132,7 +133,8 @@ create_gains_density_plot <- function(experiment_dir,
 #' @examples
 create_partial_gains_evolution_plot <- function(experiment_dir,
                                                 plot_file_name,
-                                                scatter_plot_file_name) {
+                                                scatter_plot_file_name,
+                                                n_th_improvment_file_name) {
   output_dir <- experiment_dir
   complete_data <- read_csv_into_df(experiment_dir)
   
@@ -240,7 +242,197 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
          width = 10 * algo_count + 5, 
          height = 10 * graph_count, 
          unit = "cm", limitsize = F)
+  
+  
+  # ================== CREATE RATIO n-th IMPROVEMENT ==========================
+  
+  # add to each partial solution its position in the current ILP optimization
+  points_with_num_impr <- ddply(all_points, .(algorithm, graph, partial_ilp_id), function(df) {
+    # sort data frame in ascending run time
+    df <- df %>% arrange(partial_runtime)
+    df$number_improvement <- 0:(length(df$partial_gains) - 1)
+    
+    return(df)
+  })
+  
+  # only use partial solutions of a specific range
+  filtered_points <- filter(points_with_num_impr, 1 <= number_improvement, number_improvement <= 4)
+  
+  # total number of ILP runs
+  num_instances <- length(unique(points_with_num_impr$partial_ilp_id))
+  
+  # calculate the percentage of instances that had their n-th improvment after
+  # x time
+  n_th_improvement_after_x_time <- ddply(filtered_points, 
+                                         .(algorithm, graph, number_improvement) , 
+                                         function(df) {
+    runtimes <- c(0, sort(unique(df$partial_runtime)))
+    fraction_of_instances <- sapply(runtimes, function(runtime) {
+      return(nrow(filter(df, partial_runtime <= runtime)))
+    })
+    fraction_of_instances <- fraction_of_instances / last(fraction_of_instances)
+    
+    return(data.frame(
+      runtime = runtimes, 
+      instance = fraction_of_instances))
+  })
+  
+  # the number of improvements is used to generate the positioning of the labels
+  # that state the percentage of ILPs that reach a specific number of improvements
+  max_num_improvements = max(filtered_points$number_improvement) -
+    min(filtered_points$number_improvement) + 1
+  
+  ratio_improvements_texts <- ddply(filtered_points, .(algorithm, graph, number_improvement), function(df) {
+    fraction_ilps = round((nrow(df) / num_instances) * 100, 1)
+    
+    number_improvement = df$number_improvement[1]
+    y = (max_num_improvements - number_improvement) / max_num_improvements
+    y = 0.4 * y
+    
+    return(data.frame(
+      algorithm = df$algorithm[[1]],
+      graph = df$graph[[1]],
+      number_improvement = df$number_improvement[1],
+      solver_runtime_limit = df$solver_runtime_limit[1],
+      fraction_ilps = sprintf("%.1f %%", fraction_ilps),
+      y = y
+    ))
+  })
+  
+  ggplot(filter(n_th_improvement_after_x_time, 1 <= number_improvement, number_improvement <= 4), aes(x = runtime, y = instance, color = as.factor(number_improvement))) +
+    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free_x") +
+    geom_text(data = ratio_improvements_texts, 
+                    aes(label = paste(number_improvement, ":"), 
+                        x = solver_runtime_limit,
+                        y = y, hjust = "left"),
+                    #nudge_x = -2.3,
+                    color = "black",
+                    show.legend = F) +
+    geom_text(data = ratio_improvements_texts,
+                    aes(label = fraction_ilps,
+                        x = solver_runtime_limit,
+                        y = y, hjust = "right"),
+                    #nudge_x = -0.5,
+                    #nudge_y = 0.02,
+                    show.legend = F) +
+    geom_step()
+  
+  # Save graph in file
+  ggsave(n_th_improvment_file_name, path=output_dir, 
+         width = 10 * algo_count + 5, 
+         height = 10 * graph_count, 
+         unit = "cm", limitsize = F)
 }
+
+
+
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# ======================= CONFLICT vs LOCAL GAIN ==============================
+# =============================================================================
+# =============================================================================
+create_conflict_vs_local_gain_plot <- function(experiment_dir,
+                                               plot_file_name) {
+  # load complete data
+  complete_data <- read_csv_into_df(experiment_dir = experiment_dir) %>%
+    # select only necessary columns, to avoid too many columns which conflicts with na.omit
+    dplyr::select(algorithm, graph, k, seed, gains, local_gain, conflict_value, ilp_id) %>% 
+    # remove rows with missing data
+    na.omit(complete_data, cols=c("gains", "local_gain", "conflict_value", "ilp_id")) %>%
+    # split the gains data
+    separate_rows(gains, local_gain, conflict_value, ilp_id, sep = ";", convert = T)
+  
+  if (length(row.names(complete_data)) == 0) {
+    warning(paste("Skipped creating conflict value plot for", basename(experiment_dir), ", because no conflict value data exists."))
+    return()
+  }
+  
+  complete_data$is_conflict_greater = complete_data$conflict_value >= complete_data$local_gain
+  no_zero_gains <- filter(complete_data, gains != 0)
+  num_zero_gains <- ddply(complete_data, .(algorithm, graph), function(df) data.frame(
+    algorithm = df$algorithm[1],
+    graph = df$graph[1],
+    num_zeroes = length(df$gains[df$gains == 0]),
+    percentage_zeroes = length(df$gains[df$gains == 0]) / nrow(df)
+  ))
+  
+  ggplot(no_zero_gains, aes(x = graph, y = conflict_value - local_gain)) +
+    facet_grid(rows = vars(algorithm), scales="free") +
+    geom_jitter(aes(color = graph)) +
+    geom_text_repel(data = num_zero_gains, 
+                    aes(label = paste("removed: ", num_zeroes, " (", round(percentage_zeroes * 100, 2), "%)", sep = ""), 
+                        y = -Inf, 
+                        group = graph, 
+                        hjust = "center"), 
+                    direction = "y")
+  
+  algo_count <- length(unique(complete_data$algorithm))
+  graph_count <- length(unique(complete_data$graph))
+  ggsave(plot_file_name, path=experiment_dir,
+         width = 5 * graph_count + 5, 
+         height = 15 * algo_count, 
+         unit = "cm", limitsize = F)
+}
+
+
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============== FRACTION GAIN per NUMBER IMPROVEMENT ========================
+# =============================================================================
+# =============================================================================
+create_fraction_gain_per_improvement_plot <- function(experiment_dir,
+                                                      plot_file_name) {
+  # load complete data
+  complete_data <- read_csv_into_df(experiment_dir = experiment_dir) %>%
+    dplyr::select(algorithm, graph, k, seed, partial_gains, partial_runtime, partial_objective, partial_ilp_id, gains, solver_runtime, ilp_id) %>%
+    # remove rows with missing data
+    na.omit(complete_data, cols=c("partial_gains", "partial_runtime", "partial_objective", "partial_ilp_id"))
+  
+  if (length(row.names(complete_data)) == 0) {
+    warning(paste("Skipped creating fraction gain per number improvement plot for", basename(experiment_dir), ", because no partial gains data exists."))
+    return()
+  }
+  
+  # split ';' separated partial gains into several rows (using tidyr)
+  # Each row represents one partial solution.
+  partial_points <- separate_rows(complete_data, partial_gains, partial_runtime,
+                                  partial_objective, partial_ilp_id, 
+                                  sep = ";", convert = T)
+  
+  # ignore balance objective solutions
+  partial_points <- filter(partial_points, partial_objective == 1)
+  
+  # calculate fraction of gain, per improvement
+  annotated_points <- ddply(partial_points, .(algorithm, graph, k, seed, partial_ilp_id), function(df) {
+    # sort data frame in ascending run time
+    df <- df %>% arrange(partial_runtime)
+    df$number_improvement <- 0:(length(df$partial_gains) - 1)
+    df$fraction_gain <- df$partial_gain / max(df$partial_gain)
+    
+    return(df)
+  })
+  
+  # cap negative gains and remove 0 gain values (fraction is NA)
+  capped_annotated_points <- na.omit(annotated_points, cols = c("fraction_gain"))
+  capped_annotated_points$fraction_gain[capped_annotated_points$fraction_gain < 0] <- -0.1
+  
+  ggplot(filter(capped_annotated_points, number_improvement > 0), aes(x = number_improvement, color = as.factor(number_improvement))) +
+    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free") +
+    scale_y_continuous(breaks = add_conditional_break(-0.1, function(limits) min(limits) <= -0.1),
+                       labels = replace_label(-0.1, "negative")) +
+    geom_jitter(aes(y = fraction_gain), alpha = 0.5, pch = 21) +
+    stat_boxplot(aes(y = fraction_gain, group = number_improvement), alpha = 0.5)
+  
+  algo_count <- length(unique(complete_data$algorithm))
+  graph_count <- length(unique(complete_data$graph))
+  ggsave(plot_file_name, path=experiment_dir,
+         width = 5 * graph_count + 5, 
+         height = 15 * algo_count, 
+         unit = "cm", limitsize = F)
+}
+
 
 
 #experiment_dir <- "C:/Users/Cedrico.DESKTOP-3BCMGI6/KIT/BA/experiments/test_results/001eps-Cluster_no_min_gain_2022-02-12_0"
