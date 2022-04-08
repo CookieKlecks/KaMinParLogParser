@@ -92,7 +92,7 @@ def parse_log(log_file_path, keywords):
 
 def parse_key_value_pairs(key_value_pairs):
     pairs = key_value_pairs.split(' ')
-    parsed_pairs_list = map(parse_key_value_pair, pairs)
+    parsed_pairs_list = map(parse_key_value_pair, filter(lambda pair: pair.__contains__('='), pairs))
     parsed_pairs_dict = {}
     for parsed_pairs in parsed_pairs_list:
         parsed_pairs_dict = utility.merge_dicts_by_keys(parsed_pairs_dict, {parsed_pairs[0]: parsed_pairs[1]})
