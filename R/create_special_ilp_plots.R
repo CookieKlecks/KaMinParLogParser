@@ -253,26 +253,28 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
     sorted$number_improvement <- 0:(nrow(df) - 1)
     gains <- sorted$partial_gains
     sorted$partial_diff <- c(gains[1], gains[2:length(gains)] - gains[1:length(gains) - 1])
-    return(sorted)
+    gains[gains == 0] <- 1
+    sorted$partial_diff_rel <- c(gains[1], gains[2:length(gains)] / gains[1:length(gains) - 1])
+    return(filter(sorted, partial_diff > 0, number_improvement > 0))
   }
   
   
   all_points_diff <- ddply(all_points, .(graph, algorithm, partial_ilp_id), get_diff)
   
-  ggplot(all_points_diff, aes(x = partial_runtime, y = partial_diff)) +
+  ggplot(all_points_diff, aes(x = partial_runtime, y = partial_diff_rel)) +
     facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free_x") +
-    scale_y_continuous(trans = "pseudo_log") +
-    geom_point(aes(color = (number_improvement)))
+    scale_y_continuous(trans = "pseudo_log", breaks = add_conditional_break(1)) +
+    geom_point(aes(color = (as.factor(number_improvement))), pch = 20)
   
   # Save graph in file
   ggsave(scatter_plot_file_name, path=output_dir, 
          width = 10 * algo_count + 5, 
          height = 10 * graph_count, 
          unit = "cm", limitsize = F)
-  
-  
+
+
   # ================== CREATE RATIO n-th IMPROVEMENT ==========================
-  
+
   # add to each partial solution its position in the current ILP optimization
   points_with_num_impr <- ddply(all_points, .(algorithm, graph, partial_ilp_id), function(df) {
     # sort data frame in ascending run time
