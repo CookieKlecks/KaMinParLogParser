@@ -161,6 +161,7 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
   
   # ignore balance objective solutions
   partial_points <- filter(partial_points, partial_objective == 1)
+  partial_points$final <- F
   
   
   # Get the final solutions for each ILP run to draw each line until the solver 
@@ -171,9 +172,16 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
   final_points[c("partial_gains", "partial_runtime", "partial_ilp_id")] <- 
     final_points[c("gains", "solver_runtime", "ilp_id")]
   final_points$partial_objective <- 1 # to stay compliant with partial points
+  final_points$final <- T
   
   
-  all_points <- rbind(partial_points, final_points)
+  all_points <- rbind(partial_points, final_points) %>%
+    ddply(.(algorithm, graph, partial_ilp_id), function(df) {
+      # there are always at least 2 points (first found solution and final solution) 
+      # => points - 2 = number of actual improvements
+      df$num_improvements <- nrow(df) - 2 
+      return(df)
+    })
   
   # ================= Custom aesthetic function ===============================
   #' This function calculates for each ilp_id of graph g and algorithm a 
@@ -208,13 +216,25 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
   # =========================== CREATE PLOT ===================================
   isLimitNegative <- function(limits) min(limits) <= -1
   
-  ggplot(all_points, aes(x = partial_runtime, y = partial_gains, color = get_color(partial_ilp_id, graph, algorithm))) +
+  second_improvement_points <- filter(all_points, num_improvements > 1)
+  text_no_second_improvement <- ddply(all_points, .(algorithm, graph), function(df) {
+    ratio_no_second = nrow(filter(df, num_improvements <= 1)) / nrow(df)
+    
+    return(data.frame(
+      ratio_no_second = sprintf("%.2f %% no second improvement", ratio_no_second * 100),
+      x = max(df$partial_runtime),
+      y = 0
+    ))
+  })
+  
+  ggplot(second_improvement_points, aes(x = partial_runtime, y = partial_gains, color = get_color(partial_ilp_id, graph, algorithm))) +
     facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free") +
     scale_y_continuous(trans = "pseudo_log",  # logarithmic scale
                        breaks = add_conditional_break(-1, isLimitNegative),  # if negative points exists, force break point at -1
                        labels = replace_label(-1, "negative")  # set the label of the break point -1 to negative (to indicate, that at -1 was capped)
                        ) +
-    geom_point(data = final_points, aes(group = partial_ilp_id), pch = 18, show.legend = F) +
+    geom_text(data = text_no_second_improvement, aes(label = ratio_no_second, x = x, y = y), color = "black", hjust = 1) +
+    geom_point(data = filter(second_improvement_points, final), aes(group = partial_ilp_id), pch = 18, show.legend = F) +
     geom_line(aes(group = partial_ilp_id), alpha = 0.6, lineend = "square", show.legend = F)
   
   # Save graph in file
