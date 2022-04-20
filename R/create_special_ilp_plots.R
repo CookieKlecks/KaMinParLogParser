@@ -457,8 +457,53 @@ create_fraction_gain_per_improvement_plot <- function(experiment_dir,
   algo_count <- length(unique(complete_data$algorithm))
   graph_count <- length(unique(complete_data$graph))
   ggsave(plot_file_name, path=experiment_dir,
-         width = 5 * graph_count + 5, 
-         height = 15 * algo_count, 
+         width = 15 * algo_count + 5,
+         height = 8 * graph_count,
+         unit = "cm", limitsize = F)
+}
+
+
+
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# ============================ ZERO GAIN RATIO Plot ===========================
+# =============================================================================
+# =============================================================================
+create_zero_gain_ratio_plot <- function(experiment_dir,
+                                        plot_file_name) {
+  # load complete data
+  complete_data <- read_csv_into_df(experiment_dir = experiment_dir) %>%
+    dplyr::select(algorithm, graph, k, seed, gains) %>%
+    drop_na(gains) %>%
+    separate_rows(gains, sep = ";")
+  
+  if (length(row.names(complete_data)) == 0) {
+    warning(paste("Skipped creating zero gain ratio plot for", basename(experiment_dir), ", because no gains data exists."))
+    return()
+  }
+  
+  aggregated_data <- ddply(complete_data, .(algorithm, graph, k, seed), function(df) {
+    zero_gainer <- df$gains[df$gains == 0]
+    return(data.frame(
+      zero_gain_ratio = length(zero_gainer) / length(df$gains)
+    ))
+  })
+  
+  ggplot(aggregated_data, aes(x = graph, y = zero_gain_ratio)) +
+    facet_grid(rows = vars(algorithm), scales = "free_x") + # facet the plot according to the max non-zeroes
+    geom_jitter(aes(color = graph), alpha = 0.7, shape = 21, width = 0.4) +
+    stat_boxplot(aes(color = graph), geom ='errorbar', width = 0.6) + # add top/bottom bar
+    geom_boxplot(aes(color = graph), outlier.shape = NA, alpha = 0.5) + # add average and box
+    scale_y_continuous(limits = c(0, 1)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "none")
+  
+  algo_count <- length(unique(complete_data$algorithm))
+  graph_count <- length(unique(complete_data$graph))
+  ggsave(plot_file_name, path=experiment_dir,
+         width = 4 * graph_count + 2,
+         height = 15 * algo_count,
          unit = "cm", limitsize = F)
 }
 
