@@ -1,6 +1,7 @@
 suppressPackageStartupMessages(source("create_performance_profile.R"))
 suppressPackageStartupMessages(source("create_time_plots.R"))
 suppressPackageStartupMessages(source("create_special_ilp_plots.R"))
+suppressPackageStartupMessages(source("create_ilp_solver_plots.R"))
 suppressPackageStartupMessages(source("create_special_promising_cluster_plots.R"))
 
 
@@ -136,6 +137,21 @@ for (experiment_dir in list_experiments) {
   }
   # ==========================================================
   
+  # ============= ILP FRACTION GAINS per IMPROVEMENT =====================
+  file_name <- "zero_gain_ratio.pdf"
+  
+  if(!file.exists(paste(experiment_dir, file_name, sep = "/")) 
+     || override) {
+    create_zero_gain_ratio_plot(experiment_dir = experiment_dir,
+                                plot_file_name = file_name)
+    print(" |___ created ZERO GAIN RATIO PLOT plot", quote = F)
+  }
+  # ==========================================================
+  
+  # ======= ILP SOLVER PLOTS =================================
+  create_ilp_solver_plots(experiment_dir, output_dir, override)
+  # ==========================================================
+  
   # ========== PROMISING CLUSTER SIZE HISTOGRAM ==============
   file_name <- "cluster_size_histogram.pdf"
   
@@ -187,5 +203,5 @@ for (experiment_dir in list_experiments) {
     print(" |___ Average runtime per cluster plot ALREADY EXISTS", quote = F)
   }
   # ==========================================================
-  
+
 }
