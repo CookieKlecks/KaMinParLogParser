@@ -22,7 +22,7 @@ create_timed_out_ilp_plot <- function(experiment_dir,
   # TODO: use utility function
   
   # List all .csv files in experiment dir
-  result_files <- list.files(path=experiment_dir, pattern="*.csv", full.names = T)
+  result_files <- list.files(path=experiment_dir, pattern=".csv", full.names = T)
   if (length(result_files) == 0) {
     stop(paste("No .csv result files found in", experiment_dir))
   }
