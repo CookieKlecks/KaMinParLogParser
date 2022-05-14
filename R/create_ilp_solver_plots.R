@@ -33,6 +33,7 @@ create_solver_time_distribution <- function(experiment_dir,
     geom_jitter(aes(fill=algorithm), alpha = 0.33, shape = 21, width = 0.3) + # add scattered points
     stat_boxplot(aes(color = algorithm), geom ='errorbar', width = 0.6) + # add top/bottom bar
     geom_boxplot(aes(color=algorithm), outlier.shape = NA, alpha = 0.5) + # add average and box
+    scale_y_continuous(trans = "pseudo_log") +
     theme(legend.position = "none") # remove legend
   
   algo_count <- length(unique(solver_time_data$algorithm))
@@ -67,6 +68,7 @@ create_node_count_per_gain <- function(experiment_dir,
   ggplot(solver_gain_data, aes(x = gains, y = avg_node_count)) +
     facet_wrap(vars(algorithm), scales = "free_x") + # facet the plot according to the max non-zeroes
     geom_point(aes(color = graph), pch = 20) + 
+    scale_x_continuous(trans = "pseudo_log") +
     scale_alpha_continuous(trans = "pseudo_log", range = c(0.25, 1))
   
   
