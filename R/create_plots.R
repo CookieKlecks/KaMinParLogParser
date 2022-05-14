@@ -136,30 +136,32 @@ for (experiment_dir in list_experiments) {
     print(" |___ ILP fraction gain per improvement plot ALREADY EXISTS", quote = F)
   }
   # ==========================================================
-  
+
   # ============= ILP FRACTION GAINS per IMPROVEMENT =====================
   file_name <- "zero_gain_ratio.pdf"
-  
-  if(!file.exists(paste(experiment_dir, file_name, sep = "/")) 
+
+  if(!file.exists(paste(experiment_dir, file_name, sep = "/"))
      || override) {
     create_zero_gain_ratio_plot(experiment_dir = experiment_dir,
                                 plot_file_name = file_name)
     print(" |___ created ZERO GAIN RATIO PLOT plot", quote = F)
   }
   # ==========================================================
-  
+
   # ======= ILP SOLVER PLOTS =================================
   create_ilp_solver_plots(experiment_dir, output_dir, override)
   # ==========================================================
-  
+
   # ========== PROMISING CLUSTER SIZE HISTOGRAM ==============
   file_name <- "cluster_size_histogram.pdf"
   
-  if(!file.exists(paste(output_dir, file_name, sep = "/")) 
+  if(!file.exists(paste(output_dir, file_name, sep = "/"))
      || override) {
-    create_cluster_size_histogram(experiment_dir = experiment_dir,
-                                  output_dir = output_dir,
-                                  plot_file_name = file_name)
+    try(
+      create_cluster_size_histogram(experiment_dir = experiment_dir,
+                                    output_dir = output_dir,
+                                    plot_file_name = file_name)
+    )
     print(" |___ created CLUSTER SIZE HISTOGRAM plot", quote = F)
   } else {
     print(" |___ Cluster size histogram plot ALREADY EXISTS", quote = F)
@@ -170,20 +172,24 @@ for (experiment_dir in list_experiments) {
   file_name <- "gains_per_cluster.pdf"
   
   print(" |___ create promising cluster gains-per-cluster plot:", quote = F)
-  create_gains_per_cluster_scatter_plot(experiment_dir = experiment_dir,
-                                        output_dir = output_dir,
-                                        plot_file_name = file_name,
-                                        override = override)
+  try(
+    create_gains_per_cluster_scatter_plot(experiment_dir = experiment_dir,
+                                          output_dir = output_dir,
+                                          plot_file_name = file_name,
+                                          override = override)
+  )
   # ==========================================================
   
   # ======== PROMISING CLUSTER AVG GAIN PER CLUSTER ==========
   file_name <- "average_gain_per_cluster.pdf"
   
-  if(!file.exists(paste(output_dir, file_name, sep = "/")) 
+  if(!file.exists(paste(output_dir, file_name, sep = "/"))
      || override) {
-    create_avg_gain_per_cluster_plot(experiment_dir = experiment_dir,
-                                     output_dir = output_dir,
-                                     plot_file_name = file_name)
+    try(
+      create_avg_gain_per_cluster_plot(experiment_dir = experiment_dir,
+                                       output_dir = output_dir,
+                                       plot_file_name = file_name)
+    )
     print(" |___ created AVERAGE GAIN PER CLUSTER plot", quote = F)
   } else {
     print(" |___ Average gain per cluster plot ALREADY EXISTS", quote = F)
@@ -193,11 +199,13 @@ for (experiment_dir in list_experiments) {
   # ====== PROMISING CLUSTER AVG RUNTIME PER CLUSTER =========
   file_name <- "average_runtime_per_cluster.pdf"
   
-  if(!file.exists(paste(output_dir, file_name, sep = "/")) 
+  if(!file.exists(paste(output_dir, file_name, sep = "/"))
      || override) {
-    create_avg_runtime_per_cluster_plot(experiment_dir = experiment_dir,
-                                        output_dir = output_dir,
-                                        plot_file_name = file_name)
+    try(
+      create_avg_runtime_per_cluster_plot(experiment_dir = experiment_dir,
+                                          output_dir = output_dir,
+                                          plot_file_name = file_name)
+    )
     print(" |___ created AVERAGE RUNTIME PER CLUSTER plot", quote = F)
   } else {
     print(" |___ Average runtime per cluster plot ALREADY EXISTS", quote = F)
