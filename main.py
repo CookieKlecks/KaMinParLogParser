@@ -58,15 +58,19 @@ if __name__ == "__main__":
             gather_results.gather_experiment_results(experiment_dir, GATHER_COLUMN_KEY_MAPPINGS, GATHER_ARRAY_SEPARATOR)
             print("\n")
 
-    utility.print_banner("CREATE plots:", lines=5)
-    print()
+    if utility.dict_get(config, "plots.create", True):
+        utility.print_banner("CREATE plots:", lines=5)
+        print()
 
-    create_plots_output = subprocess.run([f"RScript", f"create_plots.R", "--args", f"{EXPERIMENTS_BASE_DIR}",
-                                          f"{OVERRIDE}"],
-                                         cwd="./R",
-                                         shell=True,
-                                         stdout=sys.stdout,
-                                         stderr=sys.stderr)
-
-    if create_plots_output.returncode != 0:
-        exit(create_plots_output.returncode)
+        R_COMMAND = utility.dict_get(config, "plots.R-command", "RScript")
+        R_SCRIPT_NAME = utility.dict_get(config, "plots.script", "create_plots.R")
+        create_plots_output = subprocess.run([f"{R_COMMAND}", f"{R_SCRIPT_NAME}", "--args", f"{EXPERIMENTS_BASE_DIR}",
+                                              f"{OVERRIDE}"],
+                                             cwd="./R",
+                                             shell=True,
+                                             stdout=sys.stdout,
+                                             stderr=sys.stderr)
+        if create_plots_output.returncode != 0:
+            exit(create_plots_output.returncode)
+    else:
+        print("Skipped creating plots, as plots.create == false in the current config file.")
