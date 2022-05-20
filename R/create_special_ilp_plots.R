@@ -389,6 +389,7 @@ create_conflict_vs_local_gain_plot <- function(experiment_dir,
   ggplot(no_zero_gains, aes(x = graph, y = conflict_value - local_gain)) +
     facet_grid(rows = vars(algorithm), scales="free") +
     geom_jitter(aes(color = graph)) +
+    scale_y_continuous(trans = "pseudo_log", breaks = c(-100, -10, 0, 10, 100, 1000, 10000, 40000)) +
     geom_text_repel(data = num_zero_gains,
                     aes(label = paste("removed: ", num_zeroes, " (", round(percentage_zeroes * 100, 2), "%)", sep = ""),
                         y = -Inf,
