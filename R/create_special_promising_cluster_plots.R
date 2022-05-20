@@ -57,7 +57,7 @@ get_custom_theme <- function() {
 #' @param output_dir directory where the plot should be saved
 #' @param plot_file_name the name of the created plot (with or without suffix)
 #' @param pdf_export whether the plot should be exported to pdf
-#' @param latex_export whether the plot should be exported to latex 
+#' @param latex_export whether the plot should be exported to latex
 #' @param filter_data allows manipulating the data directly before plotting.
 #'            The function is called with the whole data frame and should return
 #'            the data frame that will be used as input for ggplot.
@@ -87,10 +87,10 @@ create_cluster_size_histogram <- function(experiment_dir,
   filtered_data <- filter_data(split_data)
   plot <- ggplot(filtered_data, aes(x=cluster_sizes, fill=graph)) +
     facet_grid(cols = vars(algorithm), rows = vars(graph)) +
-    geom_histogram(aes(y=after_stat(density)), binwidth = 1) +
-    scale_y_continuous(limits = c(0,1)) + 
+    geom_histogram(aes(y=after_stat(density), fill=graph), binwidth = 1, show.legend = F) +
+    scale_y_continuous(limits = c(0,1)) +
     labs(x="Cluster Size", y = "Relative Frequency")
-  
+
   algo_count <- length(unique(filtered_data$algorithm))
   graph_count <- length(unique(filtered_data$graph))
   h <- 3.5 * graph_count
@@ -106,7 +106,7 @@ create_cluster_size_histogram <- function(experiment_dir,
     latex_export = latex_export,
     custom_theme = get_custom_theme()
   )
-  
+
   return(plot)
 }
 
@@ -191,26 +191,26 @@ create_avg_gain_per_cluster_plot <- function(experiment_dir,
   
   calc_avg_gain <- function(df) data.frame(avg_gain = mean(df$gains))
   #split_data <- ddply(split_data, c("algorithm", "graph", "cluster_sizes"), calc_avg_gain)
-  
-  
+
+
   aggregated_data <- ddply(split_data, c("algorithm", "graph", "cluster_sizes"), function(df) data.frame(
     sum_gain = sum(df$gain)
   ))
   total_gains <- ddply(split_data, .(algorithm, graph), function(df) data.frame(
     total_gain = sum(df$gain)
   ))
-  
+
   joined_data <- join(aggregated_data, total_gains, by = c("algorithm", "graph"))
   
   # =========================== CREATE PLOT ===================================
   filtered_data <- filter_data(joined_data)
-  
+
   plot <- ggplot(filtered_data, aes(x = cluster_sizes, y = sum_gain / total_gain)) +
     facet_grid(cols = vars(algorithm), rows = vars(graph)) +
-    geom_col(aes(fill = graph)) +
-    scale_y_continuous(limits = c(0,1)) + 
+    geom_col(aes(fill = graph), show.legend = F) +
+    scale_y_continuous(limits = c(0,1)) +
     labs(x="Cluster Size", y = "Relative Gain")
-  
+
   algo_count <- length(unique(filtered_data$algorithm))
   graph_count <- length(unique(filtered_data$graph))
   h <- 3.5 * graph_count
@@ -226,7 +226,7 @@ create_avg_gain_per_cluster_plot <- function(experiment_dir,
     latex_export = latex_export,
     custom_theme = get_custom_theme()
   )
-  
+
   return(plot)
 }
 
@@ -254,7 +254,7 @@ create_avg_runtime_per_cluster_plot <- function(experiment_dir,
   
   ggplot(split_data, aes(x = cluster_sizes, y = avg_runtime)) +
     facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free_x") +
-    geom_col(aes(fill = graph))
+    geom_col(aes(fill = graph), show.legend = F)
   
   algo_count <- length(unique(split_data$algorithm))
   graph_count <- length(unique(split_data$graph))
