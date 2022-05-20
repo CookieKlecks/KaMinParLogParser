@@ -8,6 +8,9 @@ source("functions.R")
 
 setwd(base_wd)
 
+library(tikzDevice) # for output to latex (tikz command)
+options(tikzLatexPackages = c("\\usepackage{pifont}", "\\usepackage{marvosym}", "\\usepackage{tikz}", "\\usepackage{siunitx}")) # specify the packages for latex output
+
 read_csv_into_df <- function(experiment_dir) {
   # List all .csv files in experiment dir
   result_files <- list.files(path=experiment_dir, pattern=".csv", full.names = T)
@@ -90,6 +93,52 @@ read_and_aggregate_csv <- function(experiment_dir,
   }
   
   return(dataframes)
+}
+
+
+
+save_ggplot <- function(plot, 
+                        output_dir,
+                        filename,
+                        width,
+                        height,
+                        pdf_export = T,
+                        latex_export = F,
+                        add_default_theme = T,
+                        custom_theme = theme()) {
+  
+  # strip the file ending (if existing) from file name
+  name <- strsplit(basename(filename), "\\.")[[1]][[1]]
+  
+  if (add_default_theme) {
+    plot <- plot + theme_bw(base_size = 10) # add black/white theme with font size 10
+  }
+  
+  if (latex_export) {
+    latex_base_name <- paste(name, "tex", sep=".")
+    
+    latex_plot <- plot
+    if (add_default_theme) {
+      latex_plot <- latex_plot + create_theme(latex_export = T)
+    }
+    print(latex_plot)
+    
+    tikz(file.path(output_dir, latex_base_name), width = width / 2.54, height = height / 2.54)
+    print(latex_plot + custom_theme)
+    dev.off()
+  }
+  
+  if (pdf_export) {
+    pdf_base_name <- paste(name, "pdf", sep=".")
+    
+    pdf_plot <- plot
+    if (add_default_theme) {
+      pdf_plot <- plot + create_theme()
+    }
+    
+    ggsave(pdf_base_name, plot=pdf_plot + custom_theme, path=output_dir, 
+           width = width, height = height, unit = "cm", limitsize = F)
+  }
 }
 
 
