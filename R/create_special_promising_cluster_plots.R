@@ -40,10 +40,38 @@ transform_special_cluster_data <- function(complete_data,
 } 
 
 
+get_custom_theme <- function() {
+  return(theme(
+    legend.position = 'none',
+    strip.text.y = element_text(size = 8, margin = margin(2,2,2,2)),
+    strip.background.y = element_rect()
+  )
+  )
+}
 
+
+
+#' Title
+#'
+#' @param experiment_dir directory where the input data can be found.
+#' @param output_dir directory where the plot should be saved
+#' @param plot_file_name the name of the created plot (with or without suffix)
+#' @param pdf_export whether the plot should be exported to pdf
+#' @param latex_export whether the plot should be exported to latex 
+#' @param filter_data allows manipulating the data directly before plotting.
+#'            The function is called with the whole data frame and should return
+#'            the data frame that will be used as input for ggplot.
+#'
+#' @return
+#' @export
+#'
+#' @examples
 create_cluster_size_histogram <- function(experiment_dir,
                                           output_dir,
-                                          plot_file_name) {
+                                          plot_file_name,
+                                          pdf_export = T,
+                                          latex_export = F,
+                                          filter_data = identity) {
   complete_data <- read_csv_into_df(experiment_dir) %>%
     dplyr::select(algorithm, graph, k, epsilon, gains, cluster_sizes, solver_runtime, solver_runtime_limit)
   # remove rows were no gains data is given (e.g. label propagation)
@@ -56,14 +84,30 @@ create_cluster_size_histogram <- function(experiment_dir,
   split_data <- transform_special_cluster_data(complete_data, average_over_seeds = F)
   
   # =========================== CREATE PLOT ===================================
+  filtered_data <- filter_data(split_data)
+  plot <- ggplot(filtered_data, aes(x=cluster_sizes, fill=graph)) +
+    facet_grid(cols = vars(algorithm), rows = vars(graph)) +
+    geom_histogram(aes(y=after_stat(density)), binwidth = 1) +
+    scale_y_continuous(limits = c(0,1)) + 
+    labs(x="Cluster Size", y = "Relative Frequency")
   
-  ggplot(split_data, aes(x=cluster_sizes, fill=algorithm)) +
-    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free_x") +
-    geom_histogram(binwidth = 1)
+  algo_count <- length(unique(filtered_data$algorithm))
+  graph_count <- length(unique(filtered_data$graph))
+  h <- 3.5 * graph_count
+  w <- 6.5 * algo_count
   
-  algo_count <- length(unique(split_data$algorithm))
-  graph_count <- length(unique(split_data$graph))
-  ggsave(plot_file_name, path=output_dir, width = 10 * algo_count + 5, height = 5 * graph_count, unit = "cm", limitsize = F)
+  save_ggplot(
+    plot = plot,
+    output_dir = output_dir,
+    filename = plot_file_name,
+    width = w,
+    height = h,
+    pdf_export = pdf_export,
+    latex_export = latex_export,
+    custom_theme = get_custom_theme()
+  )
+  
+  return(plot)
 }
 
 
