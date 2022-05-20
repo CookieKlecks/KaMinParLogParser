@@ -21,6 +21,12 @@ read_csv_into_df <- function(experiment_dir) {
     raw_data <- read.csv(result, header = TRUE)
     # only use base name of the graph (strips the path)
     raw_data$graph <- sapply(raw_data$graph, basename)
+    raw_data$graph <- sapply(raw_data$graph, fs::path_ext_remove)
+    
+    # exchange underscores from algorithm and graph names with spaces
+    # This is necessary to avoid errors when exporting to latex
+    raw_data$algorithm <- sapply(raw_data$algorithm, str_replace_all, "_", " ")
+    raw_data$graph <- sapply(raw_data$graph, str_replace_all, "_", " ")
     
     combined_data <- rbind(combined_data, raw_data)
   }
