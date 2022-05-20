@@ -14,10 +14,12 @@ source("utility.R")
 #' The result is saved in the directory of the experiment with the given name.
 #'
 #' @param experiment_dir path to the directory where all .csv-files of the
-#' experiment are located. The result is saved in this directory.
+#' experiment are located.
+#' @param output_dir directory where the resulting files should be saved.
 #' @param plot_file_name file name of the resulting plot.
 #' @param timelimit the time limit that should be used to identify time outs.
-#' @param epsilon the used epsilon
+#' @param pdf_export whether the plot should be exported to pdf
+#' @param latex_export whether the plot should be exported to latex 
 #'
 #' @return nothing. The plot is saved in the experiment_dir with the given
 #' plot_file_name.
@@ -38,10 +40,28 @@ source("utility.R")
 #' ./experiment/performance_profile.pdf
 #' 
 create_performance_profile_plot <- function(experiment_dir, 
+                                            output_dir,
                                             plot_file_name, 
-                                            timelimit = 7200) {
+                                            title = NULL,
+                                            width = 22,
+                                            height = 15,
+                                            timelimit = 7200,
+                                            pdf_export = T,
+                                            latex_export = F,
+                                            show_infeasible_tick = T,
+                                            show_timeout_tick = T,
+                                            widths = c(3,2,1,1),
+                                            small_size = F,
+                                            filter_data = identity) {
   # read data
   dataframes <- read_and_aggregate_csv(experiment_dir, timelimit)
+  
+  # custom manipulation/filter of data:
+  i <- 1
+  for (df in dataframes) {
+    dataframes[[i]] <- filter_data(df)
+    i <- i + 1
+  }
   
   # Specify Colors of Algorithms in Plots
   if (length(dataframes) <= 9) {
@@ -51,16 +71,28 @@ create_performance_profile_plot <- function(experiment_dir,
   }
   
   # draw performance profile plot (print is necessary to actual output to pdf file)
-  performace_plot(dataframes, 
+  plot <- performace_plot(dataframes, 
                   objective = "avg_km1", 
+                  title = title,
                   hide_y_axis_title = F,
-                  show_infeasible_tick = T,
-                  show_timeout_tick = T,
-                  widths = c(3,2,1,1),
-                  latex_export = F,
-                  small_size = F)
+                  show_infeasible_tick = show_infeasible_tick,
+                  show_timeout_tick = show_timeout_tick,
+                  widths = widths,
+                  latex_export = latex_export,
+                  small_size = small_size)
   
-  ggsave(plot_file_name, path=experiment_dir, width = 22, height = 15, unit = "cm")
+  save_ggplot(
+    plot = plot,
+    output_dir = output_dir,
+    filename = plot_file_name,
+    width = width,
+    height = height,
+    pdf_export = pdf_export,
+    latex_export = latex_export,
+    add_default_theme = F
+  )
+  
+  return(plot)
 }
 
 
