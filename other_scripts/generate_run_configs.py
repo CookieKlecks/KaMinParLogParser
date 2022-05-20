@@ -52,17 +52,17 @@ def generate_run_configs(base_config, variable_values, filename, output_path):
 if __name__ == '__main__':
     OUTPUT_PATH = pathlib.Path("C:\\Users\\Cedrico.DESKTOP-3BCMGI6\\KIT\\BA\\experiments\\configs\\generated")
 
-    run_name = "pc_v2_${target_block_selector}_${max_nzs}k_${cluster_size}_bfs${bfs_distance}"
+    run_name = "ilp_pc_bfs_${target_block_selector}_${max_nzs}k_${cluster_size}_bfs${bfs_distance}"
 
-    promising_cluster_config = [
+    promising_cluster_bfs_config = [
         f"RUN_NAME={run_name}",
-        "RUN_DISPLAY_NAME=\"ILP Promising Cluster ${max_nzs}k nzs ${time_limit}s with ${cluster_size} cluster, "
+        "RUN_DISPLAY_NAME=\"ILP Promising Cluster BFS ${max_nzs}k nzs ${time_limit}s with ${cluster_size} cluster, "
         "${pc_num_seeds} seeds bfs distance ${bfs_distance} and ${max_improvements} max improvements\"",
         "",
         "REF_ALGO=ilp",
 
-        "BASE_PC_PARAMS=\"--threads 1 --r-ilp-move-selector=promising-cluster "
-        "--r-lp-num-iterations=50 --r-ilp-pre-refiner=lp\"",
+        "BASE_PC_PARAMS=\"--threads 1 --r-ilp-move-selector=promising-cluster --r-ilp-pc-mode=bfs"
+        " --r-lp-num-iterations=50 --r-ilp-pre-refiner=lp\"",
 
         "OTHER_PARAMS=\"$$BASE_PC_PARAMS --r-ilp-time-limit=${time_limit}"
         " --r-ilp-max-iterations=${max_iterations}"
@@ -110,7 +110,56 @@ if __name__ == '__main__':
         'bfs_distance': [2, 4, 8]
     }
 
-    generate_run_configs(base_config=promising_cluster_config,
-                         variable_values=custom_tuning,
+    # generate configs for promising cluster BFS
+    # generate_run_configs(base_config=promising_cluster_bfs_config,
+    #                      variable_values=custom_tuning,
+    #                      filename=Template(run_name + ".config"),
+    #                      output_path=OUTPUT_PATH)
+
+
+
+    ##################################################################################################
+    ##################################################################################################
+    ######################################## TOP GAIN ################################################
+    ##################################################################################################
+
+    run_name = "ilp_pc_top-gain_${max_nzs}k_${cluster_size}"
+
+    promising_cluster_top_gain_config = [
+        f"RUN_NAME={run_name}",
+        "RUN_DISPLAY_NAME=\"ILP Promising Cluster TOP-GAIN ${max_nzs}k nzs ${time_limit}s with ${cluster_size} cluster,"
+        " and ${max_improvements} max improvements\"",
+        "",
+        "REF_ALGO=ilp",
+
+        "BASE_PC_PARAMS=\"--threads 1 --r-ilp-move-selector=promising-cluster --r-ilp-pc-mode=top-gain"
+        " --r-lp-num-iterations=50 --r-ilp-pre-refiner=lp\"",
+
+        "OTHER_PARAMS=\"$$BASE_PC_PARAMS --r-ilp-time-limit=${time_limit}"
+        " --r-ilp-pc-fast=false"
+        " --r-ilp-max-iterations=${max_iterations}"
+        " --r-ilp-min-cut-change=${min_cut_change}"
+        " --r-ilp-max-nzs=${max_nzs}000"
+        " --r-ilp-pc-max-cluster=${cluster_size}"
+        " --r-ilp-max-improvements=${max_improvements}"
+        " --r-ilp-add-balance-obj=${balance_objective}\""
+    ]
+
+    complete_tuning_top_gain = {
+        'max_nzs': [50, 100, 150, 250, 500],
+        'max_iterations': [5],
+        'min_cut_change': [0.0001],
+        'time_limit': [5, 10, 20, 60],
+        'cluster_size': [10, 20, 30],
+        'max_improvements': [2, 200],
+        'balance_objective': [False]
+    }
+
+    simple_tuning = complete_tuning_top_gain
+    simple_tuning['time_limit'] = [20]
+    simple_tuning['max_improvements'] = [200]
+
+    generate_run_configs(base_config=promising_cluster_top_gain_config,
+                         variable_values=simple_tuning,
                          filename=Template(run_name + ".config"),
                          output_path=OUTPUT_PATH)
