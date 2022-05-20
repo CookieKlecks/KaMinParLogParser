@@ -173,7 +173,10 @@ create_gains_per_cluster_scatter_plot <- function(experiment_dir,
 
 create_avg_gain_per_cluster_plot <- function(experiment_dir,
                                              output_dir,
-                                             plot_file_name) {
+                                             plot_file_name,
+                                             pdf_export = T,
+                                             latex_export = F,
+                                             filter_data = identity) {
   complete_data <- read_csv_into_df(experiment_dir) %>%
     # only select necessary columns, as too many resulted in no rows after na.omit
     dplyr::select(algorithm, graph, k, epsilon, gains, cluster_sizes, solver_runtime, solver_runtime_limit)
@@ -187,17 +190,44 @@ create_avg_gain_per_cluster_plot <- function(experiment_dir,
   split_data <- transform_special_cluster_data(complete_data, average_over_seeds = F)
   
   calc_avg_gain <- function(df) data.frame(avg_gain = mean(df$gains))
-  split_data <- ddply(split_data, c("algorithm", "graph", "cluster_sizes"), calc_avg_gain)
+  #split_data <- ddply(split_data, c("algorithm", "graph", "cluster_sizes"), calc_avg_gain)
+  
+  
+  aggregated_data <- ddply(split_data, c("algorithm", "graph", "cluster_sizes"), function(df) data.frame(
+    sum_gain = sum(df$gain)
+  ))
+  total_gains <- ddply(split_data, .(algorithm, graph), function(df) data.frame(
+    total_gain = sum(df$gain)
+  ))
+  
+  joined_data <- join(aggregated_data, total_gains, by = c("algorithm", "graph"))
   
   # =========================== CREATE PLOT ===================================
+  filtered_data <- filter_data(joined_data)
   
-  ggplot(split_data, aes(x = cluster_sizes, y = avg_gain)) +
-    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free_x") +
-    geom_col(aes(fill = graph))
+  plot <- ggplot(filtered_data, aes(x = cluster_sizes, y = sum_gain / total_gain)) +
+    facet_grid(cols = vars(algorithm), rows = vars(graph)) +
+    geom_col(aes(fill = graph)) +
+    scale_y_continuous(limits = c(0,1)) + 
+    labs(x="Cluster Size", y = "Relative Gain")
   
-  algo_count <- length(unique(split_data$algorithm))
-  graph_count <- length(unique(split_data$graph))
-  ggsave(plot_file_name, path=output_dir, width = 10 * algo_count + 5, height = 5 * graph_count, unit = "cm", limitsize = F)
+  algo_count <- length(unique(filtered_data$algorithm))
+  graph_count <- length(unique(filtered_data$graph))
+  h <- 3.5 * graph_count
+  w <- 6.5 * algo_count
+  
+  save_ggplot(
+    plot = plot,
+    output_dir = output_dir,
+    filename = plot_file_name,
+    width = w,
+    height = h,
+    pdf_export = pdf_export,
+    latex_export = latex_export,
+    custom_theme = get_custom_theme()
+  )
+  
+  return(plot)
 }
 
 
