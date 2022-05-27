@@ -52,6 +52,7 @@ create_performance_profile_plot <- function(experiment_dir,
                                             show_timeout_tick = T,
                                             widths = c(3,2,1,1),
                                             small_size = F,
+                                            custom_color_mapping = NULL,
                                             filter_data = identity) {
   # read data
   dataframes <- read_and_aggregate_csv(experiment_dir, timelimit)
@@ -69,10 +70,14 @@ create_performance_profile_plot <- function(experiment_dir,
   dataframes <- filtered_list
   
   # Specify Colors of Algorithms in Plots
-  if (length(dataframes) <= 9) {
-    algo_color_mapping <<- brewer.pal(n = length(dataframes), name = "Set1")
+  if (is.null(custom_color_mapping)) {
+    if (length(dataframes) <= 9) {
+      algo_color_mapping <<- brewer.pal(n = length(dataframes), name = "Set1")
+    } else {
+      algo_color_mapping <<- brewer.pal(n = length(dataframes), name = "Set3")
+    }
   } else {
-    algo_color_mapping <<- brewer.pal(n = length(dataframes), name = "Set3")
+    algo_color_mapping <<- custom_color_mapping
   }
   
   # draw performance profile plot (print is necessary to actual output to pdf file)
