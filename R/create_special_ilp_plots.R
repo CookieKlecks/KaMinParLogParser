@@ -354,6 +354,92 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
 }
 
 
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# ================== RELATIVE IMPROVEMENT after x TIME ========================
+# =============================================================================
+# =============================================================================
+create_relative_improvement_after_x_time <- function(experiment_dir,
+                                                     output_dir,
+                                                     plot_file_name,
+                                                     pdf_export = T,
+                                                     latex_export = F,
+                                                     filter_data = identity) {
+  raw_data <- read_csv_into_df(experiment_dir) %>%
+    dplyr::select(algorithm, graph, seed, k, partial_gains, partial_runtime, partial_objective, partial_ilp_id, gains, solver_runtime, solver_runtime_limit, ilp_id)
+  
+  # remove rows were no partial gains data is given (e.g. label propagation)
+  raw_data <- na.omit(raw_data, cols=c("gains", "partial_gains"))
+  if (nrow(raw_data) == 0) {
+    warning(paste("Skipped creating relative improvement after x time plot for", basename(experiment_dir), ", because no partial gains data exists."))
+    return()
+  }
+  
+  # restrict to one seed and one k. This is to avoid over plotting.
+  raw_data <- filter(raw_data, seed == min(seed))
+  raw_data <- filter(raw_data, k == max(k))
+  
+  # split ';' separated partial gains into several rows (using tidyr)
+  # Each row represents one partial solution.
+  split_data <- separate_rows(raw_data, partial_gains, partial_runtime,
+                              partial_objective, partial_ilp_id, 
+                              sep = ";", convert = T)
+  
+  # ignore balance objective solutions
+  split_data <- filter(split_data, partial_objective == 1)
+  
+  gain_after_x_time <- ddply(split_data, .(algorithm, graph), function(df) {
+                               ordered_df <- df %>%
+                                 ddply(.(partial_ilp_id), function(df) {
+                                   # transform partial gains for each ILP run to be the increase since the last found solution
+                                   df <- arrange(df, partial_runtime)
+                                   gains <- df$partial_gains
+                                   len <- length(gains)
+                                   return(data.frame(
+                                     partial_runtime = df$partial_runtime,
+                                     gain_increase = c(gains[1], gains[2:len] - gains[1:len - 1])
+                                   ))
+                                 }) %>% arrange(partial_runtime)
+                               
+                               return(data.frame(
+                                 runtime = ordered_df$partial_runtime,
+                                 partial_gain = cumsum(ordered_df$gain_increase) / sum(ordered_df$gain_increase)
+                               ))
+                             })
+  
+  # cap negative values (some ILP runs start shortly with a negative solution)
+  gain_after_x_time$partial_gain[gain_after_x_time$partial_gain < 0] <- -0.1
+  
+  # use custom filter
+  gain_after_x_time <- filter_data(gain_after_x_time)
+  
+  plot <- ggplot(gain_after_x_time, aes(x = runtime, y = partial_gain)) +
+    facet_wrap(vars(algorithm)) +
+    geom_step(aes(colour = graph), show.legend = T) +
+    scale_y_continuous(breaks = add_conditional_break(-0.1, function(limit) min(limit) < 0),  # if negative points exists, force break point at -1
+                       labels = replace_label(-0.1, "negative")  # set the label of the break point -1 to negative (to indicate, that at -1 was capped)
+    ) + labs(x = "Running time", y = "Relative improvement found")
+  
+  algo_count <- length(unique(gain_after_x_time$algorithm))
+  h <- 10
+  w <- 16 * algo_count
+  
+  save_ggplot(
+    plot = plot,
+    output_dir = output_dir,
+    filename = plot_file_name,
+    width = w,
+    height = h,
+    pdf_export = pdf_export,
+    latex_export = latex_export
+  )
+  
+  return(plot)
+}
+
+
+
 
 # =============================================================================
 # =============================================================================
