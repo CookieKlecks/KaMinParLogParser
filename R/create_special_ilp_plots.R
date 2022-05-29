@@ -16,7 +16,19 @@ aggregate_timeout_data <- function(df) data.frame(
 
 
 create_timed_out_ilp_plot <- function(experiment_dir, 
-                                      plot_file_name) {
+                                      plot_file_name,
+                                      output_dir = NULL,
+                                      width = 22,
+                                      height = 15,
+                                      facet_non_zeroes = T,
+                                      pdf_export = T,
+                                      latex_export = F,
+                                      custom_color_mapping = NULL,
+                                      filter_data = identity) {
+  if(is.null(output_dir)) {
+    output_dir <- experiment_dir
+  }
+  
   # =========================== READ DATA =====================================
   
   # TODO: use utility function
@@ -47,6 +59,8 @@ create_timed_out_ilp_plot <- function(experiment_dir,
   # logged the time outs of a solver (e.g. label propagation)
   combined_data <- na.omit(combined_data, cols="avg_solver_timed_out")
   
+  combined_data <- filter_data(combined_data)
+  
   if (length(row.names(combined_data)) == 0) {
     warning(paste("Skipped creating timed out ILP plot for", basename(experiment_dir), ",because no ILP timeout data exists."))
     return()
@@ -55,7 +69,11 @@ create_timed_out_ilp_plot <- function(experiment_dir,
   # =========================== CREATE PLOT ===================================
   
   # create color pallet
-  algo_color_mapping <<- brewer.pal(n = 9, name = "Set1")
+  if (is.null(custom_color_mapping)) {
+    algo_color_mapping <<- brewer.pal(n = 9, name = "Set1")
+  } else {
+    algo_color_mapping <<- custom_color_mapping
+  }
   
   # create a labeller, that beautifies the labels for each facet in the plot
   max_non_zeroes_labeller <- function(raw_labels) {
@@ -65,8 +83,7 @@ create_timed_out_ilp_plot <- function(experiment_dir,
   }
   
   # create plot
-  ggplot(combined_data, aes(x=algorithm, y=avg_solver_timed_out)) + # load data
-    facet_grid(cols = vars(max_non_zeroes), scales = "free_x", space = "free_x", labeller = as_labeller(max_non_zeroes_labeller)) + # facet the plot according to the max non-zeroes
+  p <- ggplot(combined_data, aes(x=algorithm, y=avg_solver_timed_out)) + # load data
     geom_jitter(aes(fill=algorithm), alpha = 0.33, shape = 21, width = 0.3) + # add scattered points
     stat_boxplot(aes(color = algorithm), geom ='errorbar', width = 0.6) + # add top/bottom bar
     geom_boxplot(aes(color=algorithm), outlier.shape = NA, alpha = 0.5) + # add average and box
@@ -77,7 +94,22 @@ create_timed_out_ilp_plot <- function(experiment_dir,
     labs(x = "", y = "Percentage of ILP time limits") + # set text for x- and y-axis
     theme(legend.position = "none") # remove legend
   
-  ggsave(plot_file_name, path=experiment_dir, width = 22, height = 15, unit = "cm")
+  if(facet_non_zeroes) {
+    p <- p + facet_grid(cols = vars(max_non_zeroes), labeller = as_labeller(max_non_zeroes_labeller)) # facet the plot according to the max non-zeroes
+  }
+  
+  
+  save_ggplot(
+    plot = p,
+    output_dir = output_dir,
+    filename = plot_file_name,
+    width = width,
+    height = height,
+    pdf_export = pdf_export,
+    latex_export = latex_export
+  )
+  
+  return(p)
 }
 
 
@@ -363,6 +395,8 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
 create_relative_improvement_after_x_time <- function(experiment_dir,
                                                      output_dir,
                                                      plot_file_name,
+                                                     width = 22,
+                                                     height = 10,
                                                      pdf_export = T,
                                                      latex_export = F,
                                                      filter_data = identity) {
@@ -421,16 +455,12 @@ create_relative_improvement_after_x_time <- function(experiment_dir,
                        labels = replace_label(-0.1, "negative")  # set the label of the break point -1 to negative (to indicate, that at -1 was capped)
     ) + labs(x = "Running time", y = "Relative improvement found")
   
-  algo_count <- length(unique(gain_after_x_time$algorithm))
-  h <- 10
-  w <- 16 * algo_count
-  
   save_ggplot(
     plot = plot,
     output_dir = output_dir,
     filename = plot_file_name,
-    width = w,
-    height = h,
+    width = width,
+    height = height,
     pdf_export = pdf_export,
     latex_export = latex_export
   )
