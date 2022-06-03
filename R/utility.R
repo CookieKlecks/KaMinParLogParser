@@ -104,6 +104,7 @@ save_ggplot <- function(plot,
                         height,
                         pdf_export = T,
                         latex_export = F,
+                        small_size = F,
                         add_default_theme = T,
                         custom_theme = theme()) {
   
@@ -119,9 +120,8 @@ save_ggplot <- function(plot,
     
     latex_plot <- plot
     if (add_default_theme) {
-      latex_plot <- latex_plot + create_theme(latex_export = T)
+      latex_plot <- latex_plot + create_theme(latex_export = T, small_size = small_size)
     }
-    print(latex_plot)
     
     tikz(file.path(output_dir, latex_base_name), width = width / 2.54, height = height / 2.54)
     print(latex_plot + custom_theme)
@@ -133,7 +133,7 @@ save_ggplot <- function(plot,
     
     pdf_plot <- plot
     if (add_default_theme) {
-      pdf_plot <- plot + create_theme()
+      pdf_plot <- plot + create_theme(small_size = small_size)
     }
     
     ggsave(pdf_base_name, plot=pdf_plot + custom_theme, path=output_dir, 
