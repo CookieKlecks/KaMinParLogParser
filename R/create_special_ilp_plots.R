@@ -583,7 +583,18 @@ create_conflict_vs_local_gain_plot <- function(experiment_dir,
 # =============================================================================
 # =============================================================================
 create_fraction_gain_per_improvement_plot <- function(experiment_dir,
-                                                      plot_file_name) {
+                                                      plot_file_name,
+                                                      output_dir = NULL,
+                                                      width = NULL,
+                                                      height = NULL,
+                                                      pdf_export = T,
+                                                      latex_export = F,
+                                                      small_size = F,
+                                                      filter_data = identity) {
+  if(is.null(output_dir)) {
+    output_dir <- experiment_dir
+  }
+  
   # load complete data
   complete_data <- read_csv_into_df(experiment_dir = experiment_dir) %>%
     dplyr::select(algorithm, graph, k, seed, partial_gains, partial_runtime, partial_objective, partial_ilp_id, gains, solver_runtime, ilp_id) %>%
@@ -592,6 +603,13 @@ create_fraction_gain_per_improvement_plot <- function(experiment_dir,
 
   if (length(row.names(complete_data)) == 0) {
     warning(paste("Skipped creating fraction gain per number improvement plot for", basename(experiment_dir), ", because no partial gains data exists."))
+    return()
+  }
+  
+  complete_data <- filter_data(complete_data)
+  
+  if (nrow(complete_data) == 0) {
+    warning(paste("After filtering data for", basename(experiment_dir), ", no data is left"))
     return()
   }
 
@@ -617,20 +635,50 @@ create_fraction_gain_per_improvement_plot <- function(experiment_dir,
   # cap negative gains and remove 0 gain values (fraction is NA)
   capped_annotated_points <- na.omit(annotated_points, cols = c("fraction_gain"))
   capped_annotated_points$fraction_gain[capped_annotated_points$fraction_gain < 0] <- -0.1
+  capped_annotated_points <- filter(capped_annotated_points, number_improvement > 0)
+  
+  gmean_relative_gain_data <- ddply(capped_annotated_points, .(algorithm, graph, number_improvement),
+                                    function(df) data.frame(
+                                      mean_rel_gain = mean(df$fraction_gain)
+                                    ))
 
-  ggplot(filter(capped_annotated_points, number_improvement > 0), aes(x = number_improvement, color = as.factor(number_improvement))) +
-    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free") +
-    scale_y_continuous(breaks = add_conditional_break(-0.1, function(limits) min(limits) <= -0.1),
-                       labels = replace_label(-0.1, "negative")) +
-    geom_jitter(aes(y = fraction_gain), alpha = 0.5, pch = 21) +
-    stat_boxplot(aes(y = fraction_gain, group = number_improvement), alpha = 0.5)
+  plot <- ggplot(capped_annotated_points, aes(x = as.factor(number_improvement), y = fraction_gain, color = as.factor(number_improvement))) +
+    facet_grid(cols = vars(algorithm), rows = vars(graph)) +
+    scale_y_continuous(breaks = add_conditional_break(-0.1, function(limits) min(limits) <= -0.1, n = 8),
+                       labels = replace_label(-0.1, "negative"),
+                       limits = function(limits) c(limits[[1]], 1.1)) +
+    #geom_jitter(aes(y = fraction_gain), alpha = 0.5, pch = 21) +
+    labs(x = "Improvement", y = "Relative to Final Gain") +
+    stat_boxplot(aes(group = number_improvement), geom ='errorbar', width = 0.6) +
+    geom_boxplot(aes(group = number_improvement), outlier.shape = NA, alpha = 0.75) +
+    geom_text(data = gmean_relative_gain_data, 
+              aes(x = number_improvement, label=round(mean_rel_gain, 3), group = algorithm), 
+              y = 1.1, size = plot_text_size(latex_export))
 
   algo_count <- length(unique(complete_data$algorithm))
   graph_count <- length(unique(complete_data$graph))
-  ggsave(plot_file_name, path=experiment_dir,
-         width = 15 * algo_count + 5,
-         height = 8 * graph_count,
-         unit = "cm", limitsize = F)
+  if(is.null(width)) {
+    width <- 15 * algo_count
+  }
+  if(is.null(height)) {
+    height <- 12 * graph_count
+  }
+  
+  save_ggplot(
+    plot = plot,
+    output_dir = output_dir,
+    filename = plot_file_name,
+    width = width,
+    height = height,
+    pdf_export = pdf_export,
+    latex_export = latex_export,
+    small_size = small_size,
+    custom_theme = theme(
+      legend.position = "none",
+      strip.text.y = element_text(size = 8, margin = margin(2,2,2,2)),
+      strip.background.y = element_rect()
+    )
+  )
 }
 
 
