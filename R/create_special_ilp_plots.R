@@ -168,8 +168,14 @@ create_gains_density_plot <- function(experiment_dir,
 create_partial_gains_evolution_plot <- function(experiment_dir,
                                                 plot_file_name,
                                                 scatter_plot_file_name,
-                                                n_th_improvment_file_name) {
-  output_dir <- experiment_dir
+                                                n_th_improvment_file_name,
+                                                output_dir = NULL,
+                                                pdf_export = T,
+                                                latex_export = F,
+                                                filter_data = identity) {
+  if(is.null(output_dir)) {
+    output_dir <- experiment_dir
+  }
   complete_data <- read_csv_into_df(experiment_dir) %>%
     dplyr::select(algorithm, graph, seed, k, partial_gains, partial_runtime, partial_objective, partial_ilp_id, gains, solver_runtime, solver_runtime_limit, ilp_id)
   
@@ -180,6 +186,8 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
     warning(paste("Skipped creating partial gains evolution plot for", basename(experiment_dir), ", because no gains data exists."))
     return()
   }
+  
+  complete_data <- filter_data(complete_data)
    
   # restrict to one seed and one k. This is to avoid over plotting.
   complete_data <- filter(complete_data, seed == min(seed))
@@ -245,6 +253,13 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
   all_points$partial_gains[all_points$partial_gains < -1] <- -1
   
   
+  # ========================= Custom theme ====================================
+  custom_theme <- theme(
+    strip.text.y = element_text(size = 8, margin = margin(2,2,2,2)),
+    strip.background.y = element_rect()
+  )
+  
+  
   # =========================== CREATE PLOT ===================================
   isLimitNegative <- function(limits) min(limits) <= -1
   
@@ -252,30 +267,48 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
   text_no_second_improvement <- ddply(all_points, .(algorithm, graph), function(df) {
     ratio_no_second = nrow(filter(df, num_improvements <= 1)) / nrow(df)
     
+    if (latex_export) {
+      # escape % for latex export with a single \ (which has to be escaped in the string)
+      template_text <- "%.2f \\%% no second improvement"
+    } else {
+      template_text <- "%.2f %% no second improvement"
+    }
+    
     return(data.frame(
-      ratio_no_second = sprintf("%.2f %% no second improvement", ratio_no_second * 100),
+      ratio_no_second = sprintf(template_text, ratio_no_second * 100),
       x = max(df$partial_runtime),
       y = 0
     ))
   })
   
-  ggplot(second_improvement_points, aes(x = partial_runtime, y = partial_gains, color = get_color(partial_ilp_id, graph, algorithm))) +
-    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free") +
+  plot <- ggplot(second_improvement_points, aes(x = partial_runtime, y = partial_gains, color = get_color(partial_ilp_id, graph, algorithm))) +
+    facet_grid(cols = vars(algorithm), rows = vars(graph)) +
     scale_y_continuous(trans = "pseudo_log",  # logarithmic scale
                        breaks = add_conditional_break(-1, isLimitNegative),  # if negative points exists, force break point at -1
                        labels = replace_label(-1, "negative")  # set the label of the break point -1 to negative (to indicate, that at -1 was capped)
                        ) +
     geom_text(data = text_no_second_improvement, aes(label = ratio_no_second, x = x, y = y), color = "black", hjust = 1) +
     geom_point(data = filter(second_improvement_points, final), aes(group = partial_ilp_id), pch = 18, show.legend = F) +
+    labs(x = "ILP Solver running time", y = "Gain") +
     geom_line(aes(group = partial_ilp_id), alpha = 0.6, lineend = "square", show.legend = F)
   
   # Save graph in file
   algo_count <- length(unique(complete_data$algorithm))
   graph_count <- length(unique(complete_data$graph))
-  ggsave(plot_file_name, path=output_dir, 
-         width = 10 * algo_count + 5, 
-         height = 10 * graph_count, 
-         unit = "cm", limitsize = F)
+  width <- 10 * algo_count + 5
+  height <- 10 * graph_count
+
+  
+  save_ggplot(
+    plot = plot,
+    output_dir = output_dir,
+    filename = plot_file_name,
+    width = width,
+    height = height,
+    pdf_export = pdf_export,
+    latex_export = latex_export,
+    custom_theme = custom_theme
+  )
   
   
   # ======================= CREATE SCATTER PLOT ===============================
@@ -293,16 +326,23 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
   
   all_points_diff <- ddply(all_points, .(graph, algorithm, partial_ilp_id), get_diff)
   
-  ggplot(all_points_diff, aes(x = partial_runtime, y = partial_diff_rel)) +
-    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free_x") +
+  plot <- ggplot(all_points_diff, aes(x = partial_runtime, y = partial_diff_rel)) +
+    facet_grid(cols = vars(algorithm), rows = vars(graph)) +
     scale_y_continuous(trans = "pseudo_log", breaks = add_conditional_break(1)) +
+    labs(x = "ILP Solver running time", y = "Relative Gain Improvement") +
     geom_point(aes(color = (as.factor(number_improvement))), pch = 20)
   
   # Save graph in file
-  ggsave(scatter_plot_file_name, path=output_dir, 
-         width = 10 * algo_count + 5, 
-         height = 10 * graph_count, 
-         unit = "cm", limitsize = F)
+  save_ggplot(
+    plot = plot,
+    output_dir = output_dir,
+    filename = scatter_plot_file_name,
+    width = width,
+    height = height,
+    pdf_export = pdf_export,
+    latex_export = latex_export,
+    custom_theme = custom_theme
+  )
 
 
   # ================== CREATE RATIO n-th IMPROVEMENT ==========================
@@ -349,19 +389,26 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
     number_improvement = df$number_improvement[1]
     y = (max_num_improvements - number_improvement) / max_num_improvements
     y = 0.4 * y
+    
+    if(latex_export) {
+      # escape % for latex export with a single \ (which has to be escaped in the string)
+      template_string <- "%.1f \\%%"
+    } else {
+      template_string <- "%.1f %%"
+    }
 
     return(data.frame(
       algorithm = df$algorithm[[1]],
       graph = df$graph[[1]],
       number_improvement = df$number_improvement[1],
       solver_runtime_limit = df$solver_runtime_limit[1],
-      fraction_ilps = sprintf("%.1f %%", fraction_ilps),
+      fraction_ilps = sprintf(template_string, fraction_ilps),
       y = y
     ))
   })
 
-  ggplot(filter(n_th_improvement_after_x_time, 1 <= number_improvement, number_improvement <= 4), aes(x = runtime, y = instance, color = as.factor(number_improvement))) +
-    facet_grid(cols = vars(algorithm), rows = vars(graph), scales="free", space = "free_x") +
+  plot <- ggplot(filter(n_th_improvement_after_x_time, 1 <= number_improvement, number_improvement <= 4), aes(x = runtime, y = instance, color = as.factor(number_improvement))) +
+    facet_grid(cols = vars(algorithm), rows = vars(graph)) +
     geom_text(data = ratio_improvements_texts,
                     aes(label = paste(number_improvement, ":"),
                         x = solver_runtime_limit,
@@ -376,13 +423,20 @@ create_partial_gains_evolution_plot <- function(experiment_dir,
                     #nudge_x = -0.5,
                     #nudge_y = 0.02,
                     show.legend = F) +
+    labs(x = "ILP Solver running time", y = "Percentage of ILP runs") +
     geom_step()
 
   # Save graph in file
-  ggsave(n_th_improvment_file_name, path=output_dir,
-         width = 10 * algo_count + 5,
-         height = 10 * graph_count,
-         unit = "cm", limitsize = F)
+  save_ggplot(
+    plot = plot,
+    output_dir = output_dir,
+    filename = n_th_improvment_file_name,
+    width = width,
+    height = height,
+    pdf_export = pdf_export,
+    latex_export = latex_export,
+    custom_theme = custom_theme
+  )
 }
 
 
