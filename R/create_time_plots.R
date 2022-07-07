@@ -37,33 +37,76 @@ source("utility.R")
 #' The resulting plot is saved in the file:
 #' ./experiment/running_time.pdf
 #' 
-create_running_time_box_plot <- function(experiment_dir, 
-                                         plot_file_name, 
-                                         timelimit = 7200) {
+create_running_time_box_plot <- function(experiment_dir,
+                                         plot_file_name,
+                                         output_dir = NULL,
+                                         timelimit = 7200,
+                                         width = 22,
+                                         height = 15,
+                                         pdf_export = T,
+                                         latex_export = F,
+                                         small_size = F,
+                                         order = NULL,
+                                         custom_color_mapping = NULL,
+                                         filter_data = identity) {
+  if(is.null(output_dir)) {
+    output_dir = experiment_dir
+  }
+  
   # read data
   dataframes <- read_and_aggregate_csv(experiment_dir, timelimit)
   
+  # custom manipulation/filter of data:
+  filtered_list <- vector("list", 0)
+  for (df in dataframes) {
+    filtered_df <- filter_data(df)
+    if(nrow(filtered_df) > 0) { # only add data frame, if non empty
+      tmp_list <- vector("list", 1)
+      tmp_list[[1]] <- filtered_df
+      filtered_list <- c(filtered_list, tmp_list)
+    }
+  }
+  dataframes <- filtered_list
+  
+  
   # Specify Colors of Algorithms in Plots
-  if (length(dataframes) <= 9) {
-    algo_color_mapping <<- brewer.pal(n = length(dataframes), name = "Set1")
+  if (is.null(custom_color_mapping)) {
+    if (length(dataframes) <= 9) {
+      algo_color_mapping <<- brewer.pal(n = length(dataframes), name = "Set1")
+    } else {
+      algo_color_mapping <<- brewer.pal(n = length(dataframes), name = "Set3")
+    }
   } else {
-    algo_color_mapping <<- brewer.pal(n = length(dataframes), name = "Set3")
+    algo_color_mapping <<- custom_color_mapping
   }
   
-  # get first algorithm name of each data frame as ordering of the algorithms
-  # it is assumed, that in each data frame, i.e. each .csv-file, is only data
-  # of one algorithm.
-  order <- sapply(sapply(dataframes, '[', 'algorithm'), '[', 1)
+  if (is.null(order)) {
+    # get first algorithm name of each data frame as ordering of the algorithms
+    # it is assumed, that in each data frame, i.e. each .csv-file, is only data
+    # of one algorithm.
+    order <- sapply(sapply(dataframes, '[', 'algorithm'), '[', 1)
+  }
   
   # draw time plot (print or ggsave is necessary to actual output to pdf file)
-  running_time_box_plot(dataframes, 
+  plot <- running_time_box_plot(dataframes, 
                         show_infeasible_tick = T,
                         show_timeout_tick = T,
                         order = order,
-                        latex_export = F,
-                        small_size = F)
+                        latex_export = latex_export,
+                        small_size = small_size)
   
-  ggsave(plot_file_name, path=experiment_dir, width = 22, height = 15, unit = "cm")
+  save_ggplot(
+    plot = plot,
+    output_dir = output_dir,
+    filename = plot_file_name,
+    width = width,
+    height = height,
+    pdf_export = pdf_export,
+    latex_export = latex_export,
+    add_default_theme = F
+  )
+  
+  return(plot)
 }
 
 
