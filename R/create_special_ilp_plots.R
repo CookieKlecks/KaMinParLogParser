@@ -548,9 +548,27 @@ create_relative_improvement_after_x_time <- function(experiment_dir,
 # =============================================================================
 # =============================================================================
 create_conflict_vs_local_gain_plot <- function(experiment_dir,
-                                               plot_file_name) {
+                                               plot_file_name,
+                                               output_dir = NULL,
+                                               width = NULL,
+                                               height = NULL,
+                                               pdf_export = T,
+                                               latex_export = F,
+                                               show_infeasible_tick = T,
+                                               show_timeout_tick = T,
+                                               custom_color_mapping = NULL,
+                                               filter_data = identity,
+                                               add_percentage_zeroes = T) {
+  if(is.null(output_dir)) {
+    output_dir = experiment_dir
+  }
+  
   # load complete data
-  complete_data <- read_csv_into_df(experiment_dir = experiment_dir) %>%
+  complete_data <- read_csv_into_df(experiment_dir = experiment_dir,
+                                    filter_data = filter_data) 
+  
+  # modify/aggregate data
+  complete_data <- complete_data %>%
     # select only necessary columns, to avoid too many columns which conflicts with na.omit
     dplyr::select(algorithm, graph, k, seed, gains, local_gain, conflict_value, ilp_id) %>%
     # remove rows with missing data
@@ -572,23 +590,48 @@ create_conflict_vs_local_gain_plot <- function(experiment_dir,
     percentage_zeroes = length(df$gains[df$gains == 0]) / nrow(df)
   ))
 
-  ggplot(no_zero_gains, aes(x = graph, y = conflict_value - local_gain)) +
+  plot <- ggplot(no_zero_gains, aes(x = graph, y = conflict_value - local_gain, color = graph)) +
     facet_grid(rows = vars(algorithm), scales="free") +
-    geom_jitter(aes(color = graph), show.legend = F) +
+    #geom_jitter(show.legend = F) +
+    stat_boxplot(geom ='errorbar', width = 0.6) +
+    geom_boxplot(outlier.shape = NA, alpha = 0.75) +
     scale_y_continuous(trans = "pseudo_log", breaks = c(-100, -10, 0, 10, 100, 1000, 10000, 40000)) +
-    geom_text_repel(data = num_zero_gains,
-                    aes(label = paste("removed: ", num_zeroes, " (", round(percentage_zeroes * 100, 2), "%)", sep = ""),
-                        y = -Inf,
-                        group = graph,
-                        hjust = "center"),
-                    direction = "y")
+    scale_color_discrete(custom_color_mapping) +
+    labs(x = "Graph", y = "Difference betw. Conflict Value and Local Gain")
+  
+  
+  # add (possibly) text that states how many non-zeroes where removed
+  if(add_percentage_zeroes) {
+    plot <- plot +
+      geom_text_repel(data = num_zero_gains,
+                      aes(label = paste("removed: ", num_zeroes, " (", round(percentage_zeroes * 100, 2), "%)", sep = ""),
+                          y = -Inf,
+                          group = graph,
+                          hjust = "center"),
+                      direction = "y")
+  }
+  
+  
+  if(is.null(width)) {
+    graph_count <- length(unique(no_zero_gains$graph))
+    width <- 3 * graph_count
+  }
+  if(is.null(height)) {
+    algo_count <- length(unique(no_zero_gains$algorithm))
+    height <- 20 * algo_count + 5
+  }
 
-  algo_count <- length(unique(complete_data$algorithm))
-  graph_count <- length(unique(complete_data$graph))
-  ggsave(plot_file_name, path=experiment_dir,
-         width = 5 * graph_count + 5,
-         height = 15 * algo_count,
-         unit = "cm", limitsize = F)
+
+  save_ggplot(
+    plot = plot,
+    output_dir = output_dir,
+    filename = plot_file_name,
+    width = width,
+    height = height,
+    pdf_export = pdf_export,
+    latex_export = latex_export,
+    add_default_theme = T
+  )
 }
 
 
