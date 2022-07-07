@@ -1,19 +1,17 @@
-base_wd <- getwd()
+# Using chdir=T is important to temporary switch working directory, such that
+# relative locations in the sourced script are correct.
+source("../external_tools/new_plots_tobias/functions.R", chdir = T)
 
-# We need to change the working directory to the base of the plot module, because
-# in functions.R are source calls to relative locations inside the module.
-setwd("../external_tools/experimental_plot_scripts")
-lib_wd <- getwd()
-source("functions.R")
-
-setwd(base_wd)
 
 library(tikzDevice) # for output to latex (tikz command)
-options(tikzLatexPackages = c("\\usepackage{pifont}", "\\usepackage{marvosym}", "\\usepackage{tikz}", "\\usepackage{siunitx}")) # specify the packages for latex output
+options(tikzLatexPackages = c("\\usepackage{pifont}", 
+                              "\\usepackage{marvosym}", 
+                              "\\usepackage{tikz}", 
+                              "\\usepackage{siunitx}")) # specify the packages for latex output
 
-read_csv_into_df <- function(experiment_dir) {
+read_csv_into_df <- function(experiment_dir, filter_data = identity) {
   # List all .csv files in experiment dir
-  result_files <- list.files(path=experiment_dir, pattern=".csv", full.names = T)
+  result_files <- list.files(path=experiment_dir, pattern="*.csv", full.names = T)
   if (length(result_files) == 0) {
     stop(paste("No .csv result files found in", experiment_dir))
   }
@@ -31,7 +29,16 @@ read_csv_into_df <- function(experiment_dir) {
     raw_data$algorithm <- sapply(raw_data$algorithm, str_replace_all, "_", " ")
     raw_data$graph <- sapply(raw_data$graph, str_replace_all, "_", " ")
     
+    raw_data <- filter_data(raw_data)
+    if(nrow(raw_data) == 0) {
+      next
+    }
+    
     combined_data <- rbind(combined_data, raw_data)
+  }
+  
+  if(nrow(combined_data) == 0) {
+    warning("No data read. Maybe the filter removed every row.")
   }
   
   return(combined_data)
@@ -57,15 +64,19 @@ read_csv_into_df <- function(experiment_dir) {
 #'
 #' @param experiment_dir path to the directory where the .csv-files are located.
 #' @param timelimit limit to identify time outs in the data.
+#' @param filter_data a function that is called with every data frame as argument.
+#'              This data frame is replaced with the return value.
+#'              Use this function to filter/manipulate the data (e.g. names)
 #'
 #' @return list of data frames. Each single data frame contains the aggregated
 #' data of one .csv-file in experiment_dir.
 #'
 #' @examples
 read_and_aggregate_csv <- function(experiment_dir,
-                                      timelimit = 7200) {
+                                    timelimit = 7200,
+                                   filter_data = identity) {
   # List all .csv files in experiment_dir
-  result_files <- list.files(path=experiment_dir, pattern=".csv", full.names = T)
+  result_files <- list.files(path=experiment_dir, pattern="*.csv", full.names = T)
   
   if (length(result_files) == 0) {
     stop(paste("No .csv result files found in", experiment_dir))
@@ -89,8 +100,24 @@ read_and_aggregate_csv <- function(experiment_dir,
                                    timelimit = timelimit, 
                                    epsilon = epsilon,
                                    seeds = .Machine$integer.max)
+    
+    # manually add algorithm name, as aggreg_data strips this in the new version
+    dataframes[[i]]$algorithm <- raw_data$algorithm[[1]]
+    
     i <- i + 1
   }
+  
+  # custom manipulation/filter of data:
+  filtered_list <- vector("list", 0)
+  for (df in dataframes) {
+    filtered_df <- filter_data(df)
+    if(nrow(filtered_df) > 0) { # only add data frame, if non empty
+      tmp_list <- vector("list", 1)
+      tmp_list[[1]] <- filtered_df
+      filtered_list <- c(filtered_list, tmp_list)
+    }
+  }
+  dataframes <- filtered_list
   
   return(dataframes)
 }
