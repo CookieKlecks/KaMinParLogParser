@@ -24,6 +24,7 @@ create_timed_out_ilp_plot <- function(experiment_dir,
                                       pdf_export = T,
                                       latex_export = F,
                                       custom_color_mapping = NULL,
+                                      order_algorithms = NULL,
                                       filter_data = identity) {
   if(is.null(output_dir)) {
     output_dir <- experiment_dir
@@ -61,10 +62,16 @@ create_timed_out_ilp_plot <- function(experiment_dir,
   
   combined_data <- filter_data(combined_data)
   
+  if (!is.null(order_algorithms)) {
+    combined_data$algorithm <- factor(combined_data$algorithm, levels = order_algorithms)
+  }
+  
   if (length(row.names(combined_data)) == 0) {
     warning(paste("Skipped creating timed out ILP plot for", basename(experiment_dir), ",because no ILP timeout data exists."))
     return()
   }
+  
+  means <- aggregate(avg_solver_timed_out ~ algorithm, data = combined_data, mean)
   
   # =========================== CREATE PLOT ===================================
   
@@ -82,22 +89,31 @@ create_timed_out_ilp_plot <- function(experiment_dir,
     return(parsed_labels)
   }
   
+  number_as_percentage = function(number) {
+    value = round(number, 3) * 100
+    if (latex_export) {
+      return(paste(value, "\\%"))
+    } else {
+      return(paste(value, "%", sep = ""))
+    }
+  }
+  
   # create plot
   p <- ggplot(combined_data, aes(x=algorithm, y=avg_solver_timed_out)) + # load data
-    geom_jitter(aes(fill=algorithm), alpha = 0.33, shape = 21, width = 0.3) + # add scattered points
-    stat_boxplot(aes(color = algorithm), geom ='errorbar', width = 0.6) + # add top/bottom bar
-    geom_boxplot(aes(color=algorithm), outlier.shape = NA, alpha = 0.5) + # add average and box
+    geom_jitter(aes(fill=algorithm), alpha = 0.33, shape = 21, width = 0.3, show.legend = F) + # add scattered points
+    stat_boxplot(aes(color = algorithm), geom ='errorbar', width = 0.6, show.legend = F) + # add top/bottom bar
+    geom_boxplot(aes(color=algorithm), outlier.shape = NA, alpha = 0.5, show.legend = F) + # add average and box
+    geom_text(aes(x=algorithm, label=number_as_percentage(avg_solver_timed_out)), y = 0, data = means, size = plot_text_size(latex_export)) + # add the mean as text
     scale_y_continuous(limits = c(-0.01, 1.0)) + # scale y from 0 to 1 (use -0.01 as lower bound to avoid the removal from values with 0.0 due to floating point inaccuracy)
     theme_bw(base_size = 10) + # white background
     scale_color_manual(values=algo_color_mapping, drop = F) + # use own color mappings
     scale_fill_manual(values=algo_color_mapping, drop = F) + # use own color mappings for fill
     labs(x = "", y = "Percentage of ILP time limits") + # set text for x- and y-axis
-    theme(legend.position = "none") # remove legend
+    create_theme(latex_export = latex_export, legend_position = "none")
   
   if(facet_non_zeroes) {
     p <- p + facet_grid(cols = vars(max_non_zeroes), labeller = as_labeller(max_non_zeroes_labeller)) # facet the plot according to the max non-zeroes
   }
-  
   
   save_ggplot(
     plot = p,
