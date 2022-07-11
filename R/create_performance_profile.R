@@ -1,6 +1,3 @@
-# Using chdir=T is important to temporary switch working directory, such that
-# relative locations in the sourced script are correct.
-source("../external_tools/experimental_plot_scripts/functions.R", chdir=T)
 source("utility.R")
 
 
