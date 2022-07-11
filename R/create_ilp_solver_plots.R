@@ -11,8 +11,16 @@ source("utility.R")
 
 create_solver_time_distribution <- function(experiment_dir,
                                             output_dir,
-                                            plot_file_name) {
-  complete_df <- read_csv_into_df(experiment_dir = experiment_dir) %>%
+                                            plot_file_name,
+                                            width = NULL,
+                                            height = 10,
+                                            pdf_export = T,
+                                            latex_export = F,
+                                            small_size = F,
+                                            custom_color_mapping = NULL,
+                                            filter_data = identity) {
+  complete_df <- read_csv_into_df(experiment_dir = experiment_dir, filter_data = filter_data) 
+  complete_df <- complete_df %>%
     dplyr::select(algorithm, graph, k, epsilon, gains, solver_time_presolve, solver_time_simplex, solver_time_mip)
   
   
@@ -28,25 +36,48 @@ create_solver_time_distribution <- function(experiment_dir,
     return()
   }
   
-  ggplot(solver_time_data, aes(x = step, y = time)) +
+  palette <- brewer.pal(n = 9, name = "Set1")
+  color <- palette[[1]]
+  
+  plot <- ggplot(solver_time_data, aes(x = step, y = time)) +
     facet_wrap(vars(algorithm), scales = "free_x") + # facet the plot according to the max non-zeroes
-    geom_jitter(aes(fill=algorithm), alpha = 0.33, shape = 21, width = 0.3) + # add scattered points
-    stat_boxplot(aes(color = algorithm), geom ='errorbar', width = 0.6) + # add top/bottom bar
-    geom_boxplot(aes(color=algorithm), outlier.shape = NA, alpha = 0.5) + # add average and box
+    geom_jitter(alpha = 0.33, shape = 21, width = 0.3, fill = color) + # add scattered points
+    stat_boxplot(geom ='errorbar', width = 0.6, color = color) + # add top/bottom bar
+    geom_boxplot(outlier.shape = NA, alpha = 0.5, color = color) + # add average and box
     scale_y_continuous(trans = "pseudo_log") +
     theme(legend.position = "none") # remove legend
   
+  if(!is.null(custom_color_mapping)) {
+    plot <- plot + scale_color_discrete(custom_color_mapping)
+  }
+  
+  # set default values for width
   algo_count <- length(unique(solver_time_data$algorithm))
-  ggsave(plot_file_name, path=output_dir, width = 10 * algo_count + 5, height = 10, unit = "cm", limitsize = F)
+  if(is.null(width)) {
+    width <- 10 * algo_count + 5
+  }
+  
+  save_ggplot(plot, output_dir, plot_file_name, width = width, height = height,
+              pdf_export = pdf_export, latex_export = latex_export,
+              small_size = small_size)
+  
+  return(plot)
 }
 
 
 
 
 create_node_count_per_gain <- function(experiment_dir,
-                                            output_dir,
-                                            plot_file_name) {
-  complete_df <- read_csv_into_df(experiment_dir = experiment_dir) %>%
+                                       output_dir,
+                                       plot_file_name,
+                                       width = NULL,
+                                       height = 10,
+                                       pdf_export = T,
+                                       latex_export = F,
+                                       small_size = F,
+                                       hide_legend = F,
+                                       filter_data = identity) {
+  complete_df <- read_csv_into_df(experiment_dir = experiment_dir, filter_data = filter_data) %>%
     dplyr::select(algorithm, graph, k, epsilon, gains, solver_node_count)
   
   solver_data <- complete_df %>%
@@ -63,17 +94,49 @@ create_node_count_per_gain <- function(experiment_dir,
                               gains_count = length(df$gains),
                               avg_node_count = mean(df$solver_node_count)
                             )) %>% mutate(gains = gains * 5)
-  
-  
-  ggplot(solver_gain_data, aes(x = gains, y = avg_node_count)) +
+
+
+  plot <- ggplot(solver_gain_data, aes(x = gains, y = avg_node_count)) +
     facet_wrap(vars(algorithm), scales = "free_x") + # facet the plot according to the max non-zeroes
-    geom_point(aes(color = graph), pch = 20) + 
+    geom_point(aes(color = graph), pch = 20) +
     scale_x_continuous(trans = "pseudo_log") +
-    scale_alpha_continuous(trans = "pseudo_log", range = c(0.25, 1))
+    scale_alpha_continuous(trans = "pseudo_log", range = c(0.25, 1)) +
+    labs(x = "Gain", y = "Explored Branch-and-Bound Nodes")
+  
+  # total_solver_runs = nrow(solver_data)
+  # total_gain = sum(solver_data$gains)
+  # 
+  # solver_data_aggregated <- ddply(solver_data, .(algorithm, graph, solver_node_count), function(df) data.frame(
+  #   density_solver_node_count = nrow(df) / total_solver_runs,
+  #   density_gain = sum(df$gains) / total_gain
+  # ))
+  # 
+  # palette <- brewer.pal(n = 9, name = "Set1")
+  # color_node_count <- palette[[1]]
+  # 
+  # plot <- ggplot(solver_data_aggregated, aes(x = solver_node_count)) +
+  #   #geom_point(aes(y=density_solver_node_count)) +
+  #   geom_point(aes(y=density_gain)) +
+  #   scale_x_continuous(trans = "log2")
   
   
+  # set default values for width
   algo_count <- length(unique(solver_data$algorithm))
-  ggsave(plot_file_name, path=output_dir, width = 10 * algo_count + 5, height = 10, unit = "cm", limitsize = F)
+  if(is.null(width)) {
+    width <- 10 * algo_count + 5
+  }
+  
+  custom_theme = NULL
+  if(hide_legend) {
+    custom_theme <- theme(legend.position = "none")
+    plot <- plot + theme(legend.position = "none")
+  }
+  
+  save_ggplot(plot, output_dir, plot_file_name, width = width, height = height,
+              pdf_export = pdf_export, latex_export = latex_export,
+              small_size = small_size, custom_theme = custom_theme)
+  
+  return(plot)
 }
 
 
