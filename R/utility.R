@@ -4,10 +4,14 @@ source("../external_tools/new_plots_tobias/functions.R", chdir = T)
 
 
 library(tikzDevice) # for output to latex (tikz command)
-options(tikzLatexPackages = c("\\usepackage{pifont}", 
+if(!exists("tikzDeviceLoaded")) {
+  options(tikzLatexPackages = c("\\usepackage{pifont}", 
                               "\\usepackage{marvosym}", 
                               "\\usepackage{tikz}", 
+                              "\\usepackage{amsmath}",
                               "\\usepackage{siunitx}")) # specify the packages for latex output
+  tikzDeviceLoaded <- T
+}
 
 read_csv_into_df <- function(experiment_dir, filter_data = identity) {
   # List all .csv files in experiment dir
