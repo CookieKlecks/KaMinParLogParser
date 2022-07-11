@@ -55,19 +55,7 @@ create_performance_profile_plot <- function(experiment_dir,
                                             custom_color_mapping = NULL,
                                             filter_data = identity) {
   # read data
-  dataframes <- read_and_aggregate_csv(experiment_dir, timelimit)
-  
-  # custom manipulation/filter of data:
-  filtered_list <- vector("list", 0)
-  for (df in dataframes) {
-    filtered_df <- filter_data(df)
-    if(nrow(filtered_df) > 0) { # only add data frame, if non empty
-      tmp_list <- vector("list", 1)
-      tmp_list[[1]] <- filtered_df
-      filtered_list <- c(filtered_list, tmp_list)
-    }
-  }
-  dataframes <- filtered_list
+  dataframes <- read_and_aggregate_csv(experiment_dir, timelimit, filter_data)
   
   # Specify Colors of Algorithms in Plots
   if (is.null(custom_color_mapping)) {
