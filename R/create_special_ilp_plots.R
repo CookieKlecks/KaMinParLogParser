@@ -23,6 +23,7 @@ create_timed_out_ilp_plot <- function(experiment_dir,
                                       facet_non_zeroes = T,
                                       pdf_export = T,
                                       latex_export = F,
+                                      small_size = F,
                                       custom_color_mapping = NULL,
                                       order_algorithms = NULL,
                                       filter_data = identity) {
@@ -71,7 +72,7 @@ create_timed_out_ilp_plot <- function(experiment_dir,
     return()
   }
   
-  means <- aggregate(avg_solver_timed_out ~ algorithm, data = combined_data, mean)
+  means <- stats::aggregate(avg_solver_timed_out ~ algorithm, data = combined_data, mean)
   
   # =========================== CREATE PLOT ===================================
   
@@ -122,7 +123,8 @@ create_timed_out_ilp_plot <- function(experiment_dir,
     width = width,
     height = height,
     pdf_export = pdf_export,
-    latex_export = latex_export
+    latex_export = latex_export,
+    small_size = small_size
   )
   
   return(p)
@@ -467,16 +469,19 @@ create_relative_improvement_after_x_time <- function(experiment_dir,
                                                      plot_file_name,
                                                      width = 22,
                                                      height = 10,
+                                                     small_size = F,
                                                      pdf_export = T,
                                                      latex_export = F,
+                                                     custom_color_mapping = NULL,
                                                      filter_data = identity) {
-  raw_data <- read_csv_into_df(experiment_dir) %>%
-    dplyr::select(algorithm, graph, seed, k, partial_gains, partial_runtime, partial_objective, partial_ilp_id, gains, solver_runtime, solver_runtime_limit, ilp_id)
+  raw_data <- read_csv_into_df(experiment_dir, filter_data) %>%
+    dplyr::select(algorithm, graph, seed, k, partial_gains, partial_runtime, partial_objective, partial_ilp_id, gains)
   
   # remove rows were no partial gains data is given (e.g. label propagation)
-  raw_data <- na.omit(raw_data, cols=c("gains", "partial_gains"))
+  raw_data <- na.omit(raw_data, cols=c("gains", "partial_gains", "partial_runtime", "partial_objective", "partial_ilp_id"))
   if (nrow(raw_data) == 0) {
-    warning(paste("Skipped creating relative improvement after x time plot for", basename(experiment_dir), ", because no partial gains data exists."))
+    warning(paste("Skipped creating relative improvement after x time plot for", basename(experiment_dir), 
+                  ", because no partial gains data exists. Check that the partial ilp ids were added!"))
     return()
   }
   
@@ -515,15 +520,26 @@ create_relative_improvement_after_x_time <- function(experiment_dir,
   # cap negative values (some ILP runs start shortly with a negative solution)
   gain_after_x_time$partial_gain[gain_after_x_time$partial_gain < 0] <- -0.1
   
-  # use custom filter
-  gain_after_x_time <- filter_data(gain_after_x_time)
+  negative_label <- "negative"
+  if (small_size) {
+    if (latex_export) {
+      negative_label <- "neg."
+    } else {
+      negative_label <- "neg."
+    }
+  }
   
   plot <- ggplot(gain_after_x_time, aes(x = runtime, y = partial_gain)) +
     facet_wrap(vars(algorithm)) +
     geom_step(aes(colour = graph), show.legend = T) +
     scale_y_continuous(breaks = add_conditional_break(-0.1, function(limit) min(limit) < 0),  # if negative points exists, force break point at -1
-                       labels = replace_label(-0.1, "negative")  # set the label of the break point -1 to negative (to indicate, that at -1 was capped)
-    ) + labs(x = "Running time", y = "Relative improvement found")
+                       labels = replace_label(-0.1, negative_label)  # set the label of the break point -1 to negative (to indicate, that at -1 was capped)
+    ) + labs(x = "Running time", y = "Relative improvement found") +
+    theme_bw(base_size = 10) + create_theme(latex_export = latex_export)
+  
+  if(!is.null(custom_color_mapping)) {
+    plot <- plot + scale_color_discrete(custom_color_mapping)
+  }
   
   save_ggplot(
     plot = plot,
@@ -532,7 +548,8 @@ create_relative_improvement_after_x_time <- function(experiment_dir,
     width = width,
     height = height,
     pdf_export = pdf_export,
-    latex_export = latex_export
+    latex_export = latex_export,
+    small_size = small_size
   )
   
   return(plot)
@@ -554,6 +571,7 @@ create_conflict_vs_local_gain_plot <- function(experiment_dir,
                                                height = NULL,
                                                pdf_export = T,
                                                latex_export = F,
+                                               small_size = F,
                                                show_infeasible_tick = T,
                                                show_timeout_tick = T,
                                                custom_color_mapping = NULL,
@@ -592,12 +610,13 @@ create_conflict_vs_local_gain_plot <- function(experiment_dir,
 
   plot <- ggplot(no_zero_gains, aes(x = graph, y = conflict_value - local_gain, color = graph)) +
     facet_grid(rows = vars(algorithm), scales="free") +
+    geom_hline(yintercept = 0) +
     #geom_jitter(show.legend = F) +
-    stat_boxplot(geom ='errorbar', width = 0.6) +
-    geom_boxplot(outlier.shape = NA, alpha = 0.75) +
+    stat_boxplot(geom ='errorbar', width = 0.6, show.legend = F) +
+    geom_boxplot(outlier.shape = NA, alpha = 0.75, show.legend = F) +
     scale_y_continuous(trans = "pseudo_log", breaks = c(-100, -10, 0, 10, 100, 1000, 10000, 40000)) +
     scale_color_discrete(custom_color_mapping) +
-    labs(x = "Graph", y = "Difference betw. Conflict Value and Local Gain")
+    labs(x = NULL, y = "Difference betw. Conflict Value and Local Gain")
   
   
   # add (possibly) text that states how many non-zeroes where removed
@@ -608,13 +627,14 @@ create_conflict_vs_local_gain_plot <- function(experiment_dir,
                           y = -Inf,
                           group = graph,
                           hjust = "center"),
-                      direction = "y")
+                      direction = "y",
+                      show.legend = F)
   }
   
   
   if(is.null(width)) {
     graph_count <- length(unique(no_zero_gains$graph))
-    width <- 3 * graph_count
+    width <- 4 * graph_count
   }
   if(is.null(height)) {
     algo_count <- length(unique(no_zero_gains$algorithm))
@@ -630,6 +650,7 @@ create_conflict_vs_local_gain_plot <- function(experiment_dir,
     height = height,
     pdf_export = pdf_export,
     latex_export = latex_export,
+    small_size = small_size,
     add_default_theme = T
   )
 }
