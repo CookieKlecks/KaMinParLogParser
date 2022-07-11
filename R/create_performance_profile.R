@@ -20,6 +20,7 @@ source("utility.R")
 #' @param timelimit the time limit that should be used to identify time outs.
 #' @param pdf_export whether the plot should be exported to pdf
 #' @param latex_export whether the plot should be exported to latex 
+#' @param only_first_panel special flag to only show the first panel of the plot.
 #'
 #' @return nothing. The plot is saved in the experiment_dir with the given
 #' plot_file_name.
@@ -52,6 +53,7 @@ create_performance_profile_plot <- function(experiment_dir,
                                             show_timeout_tick = T,
                                             widths = c(3,2,1,1),
                                             small_size = F,
+                                            only_first_panel = F,
                                             custom_color_mapping = NULL,
                                             filter_data = identity) {
   # read data
@@ -78,6 +80,19 @@ create_performance_profile_plot <- function(experiment_dir,
                   widths = widths,
                   latex_export = latex_export,
                   small_size = small_size)
+  
+  if(only_first_panel) {
+    x_breaks = c(1, 1.02, 1.04, 1.06, 1.08, 1.1)
+    x_labels = c(1, 1.02, 1.04, 1.06, 1.08, 1.1)
+    x_limit = widths[[1]] # the first panel goes until x = widths[[1]]
+    
+    # taken from performance_plot function:
+    plot <- plot + scale_x_continuous(
+      breaks = as.numeric(lapply(x_breaks, FUN = plotted_tau, 100, widths)), # worst ratio is irrelevant as max x-break = 1.1
+      labels = x_labels,
+      expand = c(0, 0), limits=c(-0.02,x_limit)) +
+      geom_vline(aes(xintercept=plotted_tau(1.05, 100, widths)), colour="grey", linetype="11", size=.5)  # add this special line for the now missing break x = 1.05
+  }
   
   save_ggplot(
     plot = plot,
