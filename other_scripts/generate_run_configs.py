@@ -123,7 +123,7 @@ if __name__ == '__main__':
     ######################################## TOP GAIN ################################################
     ##################################################################################################
 
-    run_name = "ilp_pc_top-gain_${max_nzs}k_${cluster_size}"
+    run_name = "ilp_pc_top-gain_${max_nzs}k_${cluster_size}_${time_limit}s"
 
     promising_cluster_top_gain_config = [
         f"RUN_NAME={run_name}",
@@ -159,7 +159,22 @@ if __name__ == '__main__':
     simple_tuning['time_limit'] = [20]
     simple_tuning['max_improvements'] = [200]
 
+    time_limit_tuning = complete_tuning_top_gain
+    time_limit_tuning['time_limit'] = [1, 5]
+    time_limit_tuning['max_improvements'] = [200]
+    time_limit_tuning['cluster_size'] = [10, 30]
+
+    small_nzs_tuning = {
+        'max_nzs': [5, 25],
+        'max_iterations': [5],
+        'min_cut_change': [0.0001],
+        'time_limit': [20],
+        'cluster_size': [10],
+        'max_improvements': [200],
+        'balance_objective': [False]
+    }
+
     generate_run_configs(base_config=promising_cluster_top_gain_config,
-                         variable_values=simple_tuning,
+                         variable_values=small_nzs_tuning,
                          filename=Template(run_name + ".config"),
                          output_path=OUTPUT_PATH)
