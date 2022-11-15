@@ -2,15 +2,16 @@
 # relative locations in the sourced script are correct.
 source("../external_tools/new_plots_tobias/functions.R", chdir = T)
 
-
-library(tikzDevice) # for output to latex (tikz command)
-if(!exists("tikzDeviceLoaded")) {
+if(!("tikzDevice" %in% .packages())){
+  library(tikzDevice) # for output to latex (tikz command)
+}
+if(!exists("tikzDeviceLoadedCustom")) {
   options(tikzLatexPackages = c("\\usepackage{pifont}", 
                               "\\usepackage{marvosym}", 
                               "\\usepackage{tikz}", 
                               "\\usepackage{amsmath}",
                               "\\usepackage{siunitx}")) # specify the packages for latex output
-  tikzDeviceLoaded <- T
+  tikzDeviceLoadedCustom <- T
 }
 
 read_csv_into_df <- function(experiment_dir, filter_data = identity) {
@@ -122,7 +123,7 @@ read_and_aggregate_csv <- function(experiment_dir,
     }
   }
   dataframes <- filtered_list
-  
+
   return(dataframes)
 }
 
@@ -136,6 +137,7 @@ save_ggplot <- function(plot,
                         pdf_export = T,
                         latex_export = F,
                         small_size = F,
+                        x_axis_text_angle = 0,
                         add_default_theme = T,
                         custom_theme = theme()) {
   
@@ -151,7 +153,7 @@ save_ggplot <- function(plot,
     
     latex_plot <- plot
     if (add_default_theme) {
-      latex_plot <- latex_plot + create_theme(latex_export = T, small_size = small_size)
+      latex_plot <- latex_plot + create_theme(latex_export = T, small_size = small_size, x_axis_text_angle = x_axis_text_angle)
     }
     
     tikz(file.path(output_dir, latex_base_name), width = width / 2.54, height = height / 2.54)
