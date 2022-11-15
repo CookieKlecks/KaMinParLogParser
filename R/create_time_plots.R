@@ -93,7 +93,7 @@ create_running_time_box_plot <- function(experiment_dir,
                         show_timeout_tick = T,
                         order = order,
                         latex_export = latex_export,
-                        small_size = small_size)
+                        small_size = small_size) + theme(legend.text = element_text(size = legend_text_size(T, T)))
   
   save_ggplot(
     plot = plot,

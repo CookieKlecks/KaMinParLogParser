@@ -50,7 +50,9 @@ create_performance_profile_plot <- function(experiment_dir,
                                             show_timeout_tick = T,
                                             widths = c(3,2,1,1),
                                             small_size = F,
+                                            small_font = F,
                                             only_first_panel = F,
+                                            only_first_and_second_panel = F,
                                             custom_color_mapping = NULL,
                                             filter_data = identity) {
   # read data
@@ -91,6 +93,24 @@ create_performance_profile_plot <- function(experiment_dir,
       geom_vline(aes(xintercept=plotted_tau(1.05, 100, widths)), colour="grey", linetype="11", size=.5)  # add this special line for the now missing break x = 1.05
   }
   
+  if(only_first_and_second_panel) {
+    x_breaks = c(1, 1.02, 1.04, 1.06, 1.08, 1.1, 1.5)
+    x_labels = c(1, 1.02, 1.04, 1.06, 1.08, 1.1, 1.5)
+    x_limit = widths[[1]] + widths[[2]] # the first panel goes until x = widths[[1]]
+    
+    # taken from performance_plot function:
+    plot <- plot + scale_x_continuous(
+      breaks = as.numeric(lapply(x_breaks, FUN = plotted_tau, 100, widths)), # worst ratio is irrelevant as max x-break <= 1.5
+      labels = x_labels,
+      expand = c(0, 0), limits=c(-0.02,x_limit)) +
+      geom_vline(aes(xintercept=plotted_tau(1.05, 100, widths)), colour="grey", linetype="11", size=.5)  # add this special line for the now missing break x = 1.05
+  }
+  
+  custom_theme <- NULL
+  if(small_font) {
+    custom_theme <- theme(legend.text = element_text(size = legend_text_size(T, T)))
+  }
+  
   save_ggplot(
     plot = plot,
     output_dir = output_dir,
@@ -99,7 +119,8 @@ create_performance_profile_plot <- function(experiment_dir,
     height = height,
     pdf_export = pdf_export,
     latex_export = latex_export,
-    add_default_theme = F
+    add_default_theme = F,
+    custom_theme = custom_theme
   )
   
   return(plot)

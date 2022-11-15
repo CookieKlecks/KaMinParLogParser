@@ -71,7 +71,9 @@ create_cluster_size_histogram <- function(experiment_dir,
                                           plot_file_name,
                                           pdf_export = T,
                                           latex_export = F,
-                                          filter_data = identity) {
+                                          filter_data = identity,
+                                          height = 3,
+                                          width = 6.5) {
   complete_data <- read_csv_into_df(experiment_dir) %>%
     dplyr::select(algorithm, graph, k, epsilon, gains, cluster_sizes, solver_runtime, solver_runtime_limit)
   # remove rows were no gains data is given (e.g. label propagation)
@@ -93,8 +95,8 @@ create_cluster_size_histogram <- function(experiment_dir,
   
   algo_count <- length(unique(filtered_data$algorithm))
   graph_count <- length(unique(filtered_data$graph))
-  h <- 3.5 * graph_count
-  w <- 6.5 * algo_count
+  h <- height * graph_count
+  w <- width * algo_count
   
   save_ggplot(
     plot = plot,
@@ -176,7 +178,9 @@ create_avg_gain_per_cluster_plot <- function(experiment_dir,
                                              plot_file_name,
                                              pdf_export = T,
                                              latex_export = F,
-                                             filter_data = identity) {
+                                             filter_data = identity,
+                                             height = 3,
+                                             width = 6.5) {
   complete_data <- read_csv_into_df(experiment_dir) %>%
     # only select necessary columns, as too many resulted in no rows after na.omit
     dplyr::select(algorithm, graph, k, epsilon, gains, cluster_sizes, solver_runtime, solver_runtime_limit)
@@ -213,8 +217,8 @@ create_avg_gain_per_cluster_plot <- function(experiment_dir,
   
   algo_count <- length(unique(filtered_data$algorithm))
   graph_count <- length(unique(filtered_data$graph))
-  h <- 3.5 * graph_count
-  w <- 6.5 * algo_count
+  h <- height * graph_count
+  w <- width * algo_count
   
   save_ggplot(
     plot = plot,

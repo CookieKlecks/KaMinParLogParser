@@ -616,7 +616,7 @@ create_conflict_vs_local_gain_plot <- function(experiment_dir,
     geom_boxplot(outlier.shape = NA, alpha = 0.75, show.legend = F) +
     scale_y_continuous(trans = "pseudo_log", breaks = c(-100, -10, 0, 10, 100, 1000, 10000, 40000)) +
     scale_color_discrete(custom_color_mapping) +
-    labs(x = NULL, y = "Difference betw. Conflict Value and Local Gain")
+    labs(x = NULL, y = "Diff. Conflict Value and Local Gain") +
   
   
   # add (possibly) text that states how many non-zeroes where removed
@@ -651,7 +651,10 @@ create_conflict_vs_local_gain_plot <- function(experiment_dir,
     pdf_export = pdf_export,
     latex_export = latex_export,
     small_size = small_size,
-    add_default_theme = T
+    add_default_theme = T,
+    custom_theme = theme(
+      axis.text.x = element_text(angle = 15, hjust = 1, size = axis_text_size(latex_export, small_size), color = "black"),
+    )
   )
 }
 
