@@ -29,6 +29,9 @@ def aggregate_parsed_logs(current_result, aggregate_keys_dict):
 
         aggregated_value = value
         if method == "success_percentage":
+            # if only one instances for the value occurred, first transform it to a list to avoid errors
+            if not isinstance(value, list):
+                value = [value]
             successful_count = len(list(filter(bool, value)))
             aggregated_value = successful_count / len(value)
 
