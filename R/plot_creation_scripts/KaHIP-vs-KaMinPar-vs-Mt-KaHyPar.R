@@ -1,7 +1,7 @@
 source("../create_performance_profile.R", chdir = T)
 library(tidyr)
 
-experiment_dir <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaHIP_eps0-vs-KaMinPar_eps0-vs-Mt-KaHyPar_eps0.01"
+experiment_dir <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\parsed_results"
 
 
 ################################ READ DATA ####################################
@@ -13,6 +13,15 @@ kahip$algorithm <- "KaHIP 0%"
 kahip_eps_0_1 <- read.csv(paste(experiment_dir, "kahip_full_default_2022-11-27_14-55-39_eps0.01.csv", sep = "\\"), header = T)
 kahip_eps_0_1 <- aggreg_data(kahip_eps_0_1, 70000, 0) %>% drop_na()
 kahip_eps_0_1$algorithm <- "KaHIP 1%"
+
+
+kahip_no_evolutionary_eps_0 <- read.csv(paste(experiment_dir, "kahip_full_without_evolutionary_eps_0_2022-11-29_17-53-04.csv", sep = "\\"), header = T)
+kahip_no_evolutionary_eps_0 <- aggreg_data(kahip_no_evolutionary_eps_0, 70000, 0) %>% drop_na()
+kahip_no_evolutionary_eps_0$algorithm <- "KaHIP (no evolutionary) 0%"
+
+kahip_no_evolutionary_eps_0_1 <- read.csv(paste(experiment_dir, "kahip_full_without_evolutionary_eps_0.01_2022-11-29_17-53-04.csv", sep = "\\"), header = T)
+kahip_no_evolutionary_eps_0_1 <- aggreg_data(kahip_no_evolutionary_eps_0_1, 70000, 0) %>% drop_na()
+kahip_no_evolutionary_eps_0_1$algorithm <- "KaHIP (no evolutionary) 1%"
 
 
 kaminpar <- read.csv(paste(experiment_dir, "kaminpar_full_default_2022-11-19_11-25-49.csv", sep = "\\"), header = T)
@@ -53,6 +62,8 @@ kahip_mt_kahypar_eps_0_3$algorithm <- "KaHIP after Mt-KaHyPar 3%"
 palette <- brewer.pal(n = 9, name = "Set1")
 algo_color_mapping <- c("KaHIP 0%" = palette[[1]],
                         "KaHIP 1%" = palette[[2]],
+                        "KaHIP (no evolutionary) 0%" = palette[[9]],
+                        "KaHIP (no evolutionary) 1%" = palette[[9]],
                         "KaMinPar 0%" = palette[[3]],
                         "Mt-KaHyPar 1%" = palette[[4]],
                         "Mt-KaHyPar 3%" = palette[[5]],
@@ -87,7 +98,11 @@ save_ggplot(plot, experiment_dir, "KaHIP-eps0_vs_KaHIP-eps0-01", width = 22, hei
 plot <- performace_plot(list(kahip_mt_kahypar_eps_0_1, kahip_mt_kahypar_eps_0_3), objective = "avg_cut")
 save_ggplot(plot, experiment_dir, "KaHIP-Vergleich-initial-solutions", width = 22, height = 15)
 
+plot <- performace_plot(list(kahip_no_evolutionary_eps_0, kahip, kaminpar), objective = "avg_cut")
+save_ggplot(plot, experiment_dir, "KaHIP-Vergleich-without-evolutionary", width = 22, height = 15)
 
+plot <- performace_plot(list(kahip_no_evolutionary_eps_0, kahip_mt_kahypar_eps_0_1), objective = "avg_cut")
+save_ggplot(plot, experiment_dir, "KaHIP-without-evolutionary_vs_KaHIP-after-MT-KaHyPar_0-01", width = 22, height = 15)
 
 
 test <- inner_join(kahip, kahip_eps_0_1, by = c("graph", "k")) %>%
