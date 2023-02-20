@@ -4,7 +4,9 @@ source("../create_time_plots.R", chdir = T)
 library(tidyr)
 
 experiment_dir <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaHIP_vs_KaMinPar"
+output_dir <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaHIP_vs_KaMinPar"
 kaminpar_dir <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaMinPar\\runs"
+kahip_dir <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaHIP\\runs"
 
 ###############################################################################
 ###############################################################################
@@ -18,6 +20,10 @@ kahip_evo$algorithm <- "KaHIP-evolutionary"
 kahip_single <- read.csv(paste(experiment_dir, "kahip_full_without_evolutionary_eps_0_2022-11-29_17-53-04.csv", sep = "\\"), header = T)
 kahip_single <- aggreg_data(kahip_single, 70000, 0) %>% filter(graph %in% kahip_evo$graph)
 kahip_single$algorithm <- "KaHIP-single"
+
+kahip_after_kaminpar <- read.csv(paste(kahip_dir, "kahip_only-ref_kaminpar_eps_0_2023-02-04_00-42-20.csv", sep = "\\"), header = T)
+kahip_after_kaminpar <- aggreg_data(kahip_after_kaminpar, 70000, 0) %>% filter(graph %in% kahip_evo$graph)
+kahip_after_kaminpar$algorithm <- "KaHIP after KaMinPar"
 
 kaminpar <- read.csv(paste(kaminpar_dir, "kaminpar_full_default_eps_0_2022-12-14_13-50-13.csv", sep = "\\"), header = T)
 kaminpar <- aggreg_data(kaminpar, 70000, 0) %>% filter(graph %in% kahip_evo$graph)
@@ -39,14 +45,42 @@ kaminpar_ilp_no_balance <- read.csv(paste(kaminpar_dir, "kaminpar_full_ilp_pairw
 kaminpar_ilp_no_balance <- aggreg_data(kaminpar_ilp_no_balance, 70000, 0) %>% filter(graph %in% kahip_evo$graph)
 kaminpar_ilp_no_balance$algorithm <- "KaMinPar-ILP no balance"
 
-kaminpar_fixed_after_kahip <- read.csv(paste(kaminpar_dir, "kaminpar_only_ilp_after_kahip_no-permutations_eps_0_2023-01-03_18-00-43.csv", sep = "\\"), header = T)
+kaminpar_fixed_after_kahip <- read.csv(paste(kaminpar_dir, "kaminpar_only-refinement_ilp_pairwise-fm_no-balance_kahip_no-neg-cycle_eps_0_2022-12-20_05-18-05.csv", sep = "\\"), header = T)
 kaminpar_fixed_after_kahip <- aggreg_data(kaminpar_fixed_after_kahip, 70000, 0) %>% filter(graph %in% kahip_evo$graph)
 kaminpar_fixed_after_kahip$algorithm <- "KaMinPar-ILP after KaHIP fixed"
 
 
-fixed_kaminpar_batched_after_kahip <- read.csv(paste(kaminpar_dir, "without_rearrangement_kaminpar_full_move-batches-ilp_pairwise-fm_no-balance_kahip_no-neg-cycle_eps_0_2023-01-03_17-28-31.csv", sep = "\\"), header = T)
+fixed_kaminpar_batched_after_kahip <- read.csv(paste(kaminpar_dir, "kaminpar_only-ref_move-batches_2023-01-30_01-13-38.csv", sep = "\\"), header = T)
 fixed_kaminpar_batched_after_kahip <- aggreg_data(fixed_kaminpar_batched_after_kahip, 70000, 0) %>% filter(graph %in% kahip_evo$graph)
 fixed_kaminpar_batched_after_kahip$algorithm <- "KaMinPar-Move-Batches-ILP after KaHIP fixed"
+
+
+
+
+kaminpar_pariwiseLP <- read.csv(paste(kaminpar_dir, "kaminpar_only-ref-[KaHIP]_geometric-shrinking_pairwise-lp_eps_0_2023-02-20_03-25-02.csv", sep = "\\"), header = T)
+kaminpar_pariwiseLP <- aggreg_data(kaminpar_pariwiseLP, 70000, 0) %>% filter(graph %in% kahip_evo$graph)
+kaminpar_pariwiseLP$algorithm <- "KaMinPar-PairwiseLP"
+
+
+kaminpar_ilp_lazy <- read.csv(paste(kaminpar_dir, "kaminpar_only-ref_ilp-lazy_pairwise-fm_no-balance_kahip_no-neg-cycle_eps_0_2023-02-06_02-55-37.csv", sep = "\\"), header = T)
+kaminpar_ilp_lazy <- aggreg_data(kaminpar_ilp_lazy, 70000, 0) %>% filter(graph %in% kahip_evo$graph)
+kaminpar_ilp_lazy$algorithm <- "KaMinPar-ILP-lazy"
+
+kaminpar_batched_ilp_lazy <- read.csv(paste(kaminpar_dir, "kaminpar_only-ref_ilp_pairwise-fm_kaminpar_eps_0_2023-02-04_00-42-20.csv", sep = "\\"), header = T)
+kaminpar_batched_ilp_lazy <- aggreg_data(kaminpar_batched_ilp_lazy, 70000, 0) %>% filter(graph %in% kahip_evo$graph)
+kaminpar_batched_ilp_lazy$algorithm <- "KaMinPar-Batched-ILP-lazy"
+
+
+
+############################# After KaMinPar ###############################
+
+kaminpar_ilp_after_kaminpar <- read.csv(paste(kaminpar_dir, "kaminpar_only-ref_ilp_pairwise-fm_kaminpar_eps_0_2023-02-04_00-42-20.csv", sep = "\\"), header = T)
+kaminpar_ilp_after_kaminpar <- aggreg_data(kaminpar_ilp_after_kaminpar, 70000, 0) %>% filter(graph %in% kahip_evo$graph)
+kaminpar_ilp_after_kaminpar$algorithm <- "KaMinPar-ILP after KaMinPar"
+
+kaminpar_batched_ilp_after_kaminpar <- read.csv(paste(kaminpar_dir, "kaminpar_only-ref_move-batches-ilp_pairwise-fm_kaminpar_eps_0_2023-02-04_00-42-20.csv", sep = "\\"), header = T)
+kaminpar_batched_ilp_after_kaminpar <- aggreg_data(kaminpar_batched_ilp_after_kaminpar, 70000, 0) %>% filter(graph %in% kahip_evo$graph)
+kaminpar_batched_ilp_after_kaminpar$algorithm <- "KaMinPar-Batched-ILP after KaMinPar"
 
 ############################# Shrinking methods ###############################
 kaminpar_geometric_after_kahip <- read.csv(paste(kaminpar_dir, "kaminpar_only-ref_geometric-shrinking_ilp_pairwise-fm_initial-kahip_eps_0_2023-01-23_06-22-54.csv", sep = "\\"), header = T)
@@ -75,7 +109,12 @@ algo_color_mapping <- c("KaHIP-evolutionary" = palette[[1]],
                         "KaMinPar-ILP after KaHIP fixed" = palette[[3]],
                         "KaMinPar-Move-Batches-ILP after KaHIP fixed" = palette[[4]],
                         "KaMinPar-geometric after KaHIP" = palette[[5]],
-                        "KaMinPar-linear after KaHIP" = palette[[6]])
+                        "KaMinPar-linear after KaHIP" = palette[[6]],
+                        "KaHIP after KaMinPar" = palette[[7]],
+                        "KaMinPar-ILP after KaMinPar" = palette[[8]],
+                        "KaMinPar-Batched-ILP after KaMinPar" = palette[[9]],
+                        "KaMinPar-ILP-lazy" = palette[[3]],
+                        "KaMinPar-Batched-ILP-lazy" = palette[[4]])
 
 
 plot <- performace_plot(list(kahip_single, kaminpar_ilp), objective = "avg_cut")
@@ -118,6 +157,26 @@ save_ggplot(plot, output_dir, "FIXED_KaHIP-vs-KaMinPar_ILP_after_KaHIP", width =
 
 plot <- performace_plot(list(fixed_kaminpar_batched_after_kahip, kahip_single), objective = "avg_cut")
 save_ggplot(plot, output_dir, "FIXED_KaHIP-vs-KaMinPar__Move_Batches_ILP_after_KaHIP", width = 22, height = 15)
+
+
+plot <- performace_plot(list(kaminpar_ilp_lazy, kahip_single), objective = "avg_cut")
+save_ggplot(plot, output_dir, "KaHIP-vs-KaMinPar_ILP_lazy", width = 22, height = 15)
+
+plot <- performace_plot(list(kaminpar_batched_ilp_lazy, kahip_single), objective = "avg_cut")
+save_ggplot(plot, output_dir, "KaHIP-vs-KaMinPar_Batched_ILP_lazy", width = 22, height = 15)
+
+
+############################# After KaMinPar ###############################
+
+
+plot <- performace_plot(list(kahip_after_kaminpar, kaminpar_ilp_after_kaminpar), objective = "avg_cut")
+save_ggplot(plot, output_dir, "init_KaMinPar-KaHIP-vs-KaMinPar_ILP", width = 22, height = 15)
+
+plot <- performace_plot(list(kahip_after_kaminpar, kaminpar_batched_ilp_after_kaminpar), objective = "avg_cut")
+save_ggplot(plot, output_dir, "init_KaMinPar-KaHIP-vs-KaMinPar_Batched_ILP", width = 22, height = 15)
+
+plot <- performace_plot(list(kaminpar_batched_ilp_after_kaminpar, kaminpar_ilp_after_kaminpar), objective = "avg_cut")
+save_ggplot(plot, output_dir, "init_KaMinPar-KaMinPar_ILP-vs-KaMinPar_Batched_ILP", width = 22, height = 15)
 
 
 ############################# Shrinking methods ###############################
@@ -164,7 +223,16 @@ improve_algo_names <- function(df) {
       algorithm <- "MB-ILP"
     }
     if(algo == "kahip_full_default_2022-11-27_13-40-55") {
-      algorithm <- "KaHIP"
+      algorithm <- "KaHIP-evolutionary"
+    }
+    if(algo == "kahip_full_without_evolutionary_eps_0_2022-11-29_17-53-04") {
+      algorithm <- "KaHIP-single"
+    }
+    if(algo == "kaminpar_only-ref-[KaHIP]_pairwise-lp_eps_0_2023-02-20_03-25-02") {
+      algorithm <- "KaMinPar-PairwiseLP"
+    }
+    if(algo == "kaminpar_only-ref-[KaHIP]_geometric-shrinking_pairwise-lp_eps_0_2023-02-20_03-25-02") {
+      algorithm <- "KaMinPar-PairwiseLP-LazyILP"
     }
     return(algorithm)
   })
@@ -172,14 +240,14 @@ improve_algo_names <- function(df) {
   if (df$algorithm[[1]] == "KaHIP") {
     df$num_threads = 1
   }
-  return(df)
+  return(df %>% filter(!is.na(graph)))
 }
 
 create_timed_out_ilp_plot(kaminpar_dir, "timed_out_ilps.pdf", output_dir, filter_data = improve_algo_names)
 
 
-experiment_dir_running_times <- "C:\\Users\\Cedrico\\KIT\\HiWi\\parse_results\\KaMinPar\\compare_running_times"
-create_running_time_box_plot(experiment_dir_running_times, "running_times.pdf", experiment_dir_running_times, filter_data = improve_algo_names)
+experiment_dir_running_times <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaMinPar\\compare_running_times"
+create_running_time_box_plot(experiment_dir_running_times, "running_times_2.pdf", experiment_dir_running_times, epsilon = 0, filter_data = improve_algo_names)
 
 
 
