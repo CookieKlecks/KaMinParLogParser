@@ -41,6 +41,7 @@ create_running_time_box_plot <- function(experiment_dir,
                                          plot_file_name,
                                          output_dir = NULL,
                                          timelimit = 7200,
+                                         epsilon = 0.03,
                                          width = 22,
                                          height = 15,
                                          pdf_export = T,
@@ -54,7 +55,7 @@ create_running_time_box_plot <- function(experiment_dir,
   }
   
   # read data
-  dataframes <- read_and_aggregate_csv(experiment_dir, timelimit)
+  dataframes <- read_and_aggregate_csv(experiment_dir, timelimit, epsilon = epsilon)
   
   # custom manipulation/filter of data:
   filtered_list <- vector("list", 0)

@@ -79,7 +79,8 @@ read_csv_into_df <- function(experiment_dir, filter_data = identity) {
 #' @examples
 read_and_aggregate_csv <- function(experiment_dir,
                                     timelimit = 7200,
-                                   filter_data = identity) {
+                                   filter_data = identity,
+                                   epsilon = 0.03) {
   # List all .csv files in experiment_dir
   result_files <- list.files(path=experiment_dir, pattern="*.csv", full.names = T)
   
@@ -90,13 +91,12 @@ read_and_aggregate_csv <- function(experiment_dir,
   # import these .csv files into one data frame each
   dataframes <- vector("list", length(result_files))
   i <- 1
-  epsilon <- 0.03
   for (result in result_files) {
     raw_data <- read.csv(result, header = TRUE)
     if (i == 1) {
       # use minimum epsilon, because KaMinPar increases the epsilon, if a graph
       # contains isolated nodes.
-      epsilon <- min(raw_data$epsilon)
+      #epsilon <- min(raw_data$epsilon)
     }
     # only use base name of the graph (strips the path)
     raw_data$graph <- sapply(raw_data$graph, basename)
