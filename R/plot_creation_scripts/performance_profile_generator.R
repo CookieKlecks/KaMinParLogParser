@@ -61,9 +61,11 @@ create_performance_profile <- function(run_configs, file_name = "", dry_run = F)
 }
 
 
+# ============= Define runs =====================
+
 palette <- brewer.pal(n = 9, name = "Set1")
 
-
+# ================== KaHIP ======================
 KaHIP_single <- c("base_dir" = kahip_dir,
                   "name" = "kahip_only-negative-cycle_kahip_no-neg-cycle_eps_0_2023-01-30_02-40-27.csv",
                   "algo_name" = "KaHIP-single",
@@ -74,64 +76,206 @@ KaHIP_evolutionary <- c("base_dir" = kahip_dir,
                   "algo_name" = "KaHIP-evolutionary",
                   "color" = palette[[2]])
 
+# ================== KaMinPar ======================
 KaMinPar <- c("base_dir" = experiment_dir,
               "name" = "kaminpar_full_default_eps_0_2022-12-14_13-50-13.csv",
               "algo_name" = "KaMinPar",
               "color" = palette[[3]])
 
-KaMinPar_after_KaHIP <- c("base_dir" = kaminpar_dir,
+# ================== KaMinPar-refine-KaHIP ======================
+KaMinPar_after_KaHIP <- c("base_dir" = paste(kaminpar_dir, "0_GENERAL", sep = "\\"),
                           "name" = "kaminpar_only-ref_ilp_pairwise-fm_kaminpar_eps_0_2023-02-04_00-42-20.csv",
                           "algo_name" = "KaMinPar-PairwiseFM",
                           "color" = palette[[9]])
 
 
-KaMinPar_PairwiseLP <- c("base_dir" = kaminpar_dir,
+KaMinPar_PairwiseLP <- c("base_dir" = paste(kaminpar_dir, "0_GENERAL", sep = "\\"),
                          "name" = "kaminpar_only-ref-[KaHIP]_pairwise-lp_eps_0_2023-02-20_03-25-02.csv",
                          "algo_name" = "KaMinPar-PairwiseLP",
                          "color" = palette[[4]])
 
-KaMinPar_PairwiseLP_geom_shrinking <- c("base_dir" = kaminpar_dir,
-                         "name" = "kaminpar_only-ref-[KaHIP]_geometric-shrinking_pairwise-lp_eps_0_2023-02-20_03-25-02.csv",
-                         "algo_name" = "KaMinPar-PairwiseLP-LazyILP",
-                         "color" = palette[[5]])
-
-KaMinPar_PairwiseLP_rand2 <- c("base_dir" = kaminpar_dir,
+KaMinPar_PairwiseLP_rand2 <- c("base_dir" = paste(kaminpar_dir, "0_GENERAL", sep = "\\"),
                          "name" = "kaminpar_only-ref-[KaHIP]_pairwise-lp_rand2_eps_0_2023-02-20_03-25-02.csv",
                          "algo_name" = "KaMinPar-PairwiseLP-gain",
                          "color" = palette[[6]])
 
 
-KaMinPar_PairwiseLP_manyILPs <- c("base_dir" = kaminpar_dir,
+KaMinPar_PairwiseLP_manyILPs <- c("base_dir" = paste(kaminpar_dir, "0_GENERAL", sep = "\\"),
                          "name" = "kaminpar_only-ref-[KaHIP]_pairwise-lp_many-ilps_eps_0_2023-02-20_04-04-06.csv",
                          "algo_name" = "KaMinPar-PairwiseLP-ManyILPs",
                          "color" = palette[[7]])
 
-palette <- brewer.pal(n = 9, name = "Set1")
-algo_color_mapping <- c("KaHIP-evolutionary" = palette[[1]],
-                        "KaHIP-single" = palette[[2]],
-                        "KaMinPar" = palette[[3]],
-                        "KaMinPar-ILP 20s" = palette[[4]],
-                        "KaMinPar-ILP 120s" = palette[[5]],
-                        "KaMinPar-ILP 600s" = palette[[6]],
-                        "KaHIP after Mt-KaHyPar 1%" = palette[[7]],
-                        "KaHIP after Mt-KaHyPar 3%" = palette[[8]],
-                        "KaMinPar-ILP after KaHIP fixed" = palette[[3]],
-                        "KaMinPar-Move-Batches-ILP after KaHIP fixed" = palette[[4]],
-                        "KaMinPar-geometric after KaHIP" = palette[[5]],
-                        "KaMinPar-linear after KaHIP" = palette[[6]],
-                        "KaHIP after KaMinPar" = palette[[7]],
-                        "KaMinPar-ILP after KaMinPar" = palette[[8]],
-                        "KaMinPar-Batched-ILP after KaMinPar" = palette[[9]],
-                        "KaMinPar-ILP-lazy" = palette[[3]],
-                        "KaMinPar-Batched-ILP-lazy" = palette[[4]],
-                        "KaMinPar-PairwiseLP" = palette[[5]],
-                        "KaMinPar-PairwiseLP-LazyILP" = palette[[6]],
-                        "KaMinPar-PairwiseLP-gain" = palette[[7]],
-                        "KaMinPar-PairwiseLP-ManyILPs" = palette[[8]])
+# ================== KaMinPar-PairwiseLP geom-shrinking ======================
+KaMinPar_PairwiseLP_geom_shrinking_nz50 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__geometric-shrinking", sep = "\\"),
+                                        "name" = "kaminpar_only-ref-[KaHIP]_geometric-shrinking_pairwise-lp__eps0__nz50k__2023-02-27_17-19-16.csv",
+                                        "algo_name" = "KaMinPar-PairwiseLP-shrinking_eps 50nz",
+                                        "color" = palette[[4]])
+KaMinPar_PairwiseLP_geom_shrinking_nz100 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__geometric-shrinking", sep = "\\"),
+                                        "name" = "kaminpar_only-ref-[KaHIP]_geometric-shrinking_pairwise-lp__eps0__nz100k__2023-02-27_17-19-16.csv",
+                                        "algo_name" = "KaMinPar-PairwiseLP-shrinking_eps 100nz",
+                                        "color" = palette[[5]])
+KaMinPar_PairwiseLP_geom_shrinking_nz150 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__geometric-shrinking", sep = "\\"),
+                                        "name" = "kaminpar_only-ref-[KaHIP]_geometric-shrinking_pairwise-lp__eps0__nz150k__2023-02-27_17-19-16.csv",
+                                        "algo_name" = "KaMinPar-PairwiseLP-shrinking_eps 150nz",
+                                        "color" = palette[[6]])
+KaMinPar_PairwiseLP_geom_shrinking_nz200 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__geometric-shrinking", sep = "\\"),
+                                        "name" = "kaminpar_only-ref-[KaHIP]_geometric-shrinking_pairwise-lp__eps0__nz200k__2023-02-27_17-19-16.csv",
+                                        "algo_name" = "KaMinPar-PairwiseLP-shrinking_eps 200nz",
+                                        "color" = palette[[7]])
+KaMinPar_PairwiseLP_geom_shrinking_nz500 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__geometric-shrinking", sep = "\\"),
+                                        "name" = "kaminpar_only-ref-[KaHIP]_geometric-shrinking_pairwise-lp__eps0__nz500k__2023-02-27_17-19-16.csv",
+                                        "algo_name" = "KaMinPar-PairwiseLP-shrinking_eps 500nz",
+                                        "color" = palette[[8]])
+
+# ================== KaMinPar-PairwiseLP geom-shrinking lazy-ILP ======================
+KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz50 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__geometric-shrinking__lazy-ILP", sep = "\\"),
+                                             "name" = "kaminpar_only-ref-[KaHIP]_geometric-shrinking_lazy-ilp_pairwise-lp__eps0__nz50k__2023-02-27_19-47-56.csv",
+                                             "algo_name" = "KaMinPar-PairwiseLP-shrinking_eps-lazyILP 50nz",
+                                             "color" = palette[[2]])
+KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz100 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__geometric-shrinking__lazy-ILP", sep = "\\"),
+                                              "name" = "kaminpar_only-ref-[KaHIP]_geometric-shrinking_lazy-ilp_pairwise-lp__eps0__nz100k__2023-02-27_19-47-56.csv",
+                                              "algo_name" = "KaMinPar-PairwiseLP-shrinking_eps-lazyILP 100nz",
+                                              "color" = palette[[3]])
+KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz150 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__geometric-shrinking__lazy-ILP", sep = "\\"),
+                                              "name" = "kaminpar_only-ref-[KaHIP]_geometric-shrinking_lazy-ilp_pairwise-lp__eps0__nz150k__2023-02-27_19-47-56.csv",
+                                              "algo_name" = "KaMinPar-PairwiseLP-shrinking_eps-lazyILP 150nz",
+                                              "color" = palette[[4]])
+KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz200 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__geometric-shrinking__lazy-ILP", sep = "\\"),
+                                              "name" = "kaminpar_only-ref-[KaHIP]_geometric-shrinking_lazy-ilp_pairwise-lp__eps0__nz200k__2023-02-27_19-47-56.csv",
+                                              "algo_name" = "KaMinPar-PairwiseLP-shrinking_eps-lazyILP 200nz",
+                                              "color" = palette[[5]])
+KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz500 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__geometric-shrinking__lazy-ILP", sep = "\\"),
+                                              "name" = "kaminpar_only-ref-[KaHIP]_geometric-shrinking_lazy-ilp_pairwise-lp__eps0__nz500k__2023-02-27_19-47-56.csv",
+                                              "algo_name" = "KaMinPar-PairwiseLP-shrinking_eps-lazyILP 500nz",
+                                              "color" = palette[[6]])
 
 
-create_performance_profile(list(KaHIP_single, KaMinPar))
-test_3 <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP, KaMinPar_PairwiseLP_geom_shrinking))
+# ================== KaMinPar-PairwiseLP no-shrinking lazy-ILP ======================
+KaMinPar_PairwiseLP_no_shrinking_lazy_ilp_nz50 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__no-shrinking__lazy-ILP", sep = "\\"),
+                                                      "name" = "kaminpar_only-ref-[KaHIP]_lazy-ilp_pairwise-lp__eps0__nz50k__2023-02-27_19-47-56.csv",
+                                                      "algo_name" = "KaMinPar-PairwiseLP-lazyILP 50nz",
+                                                      "color" = palette[[6]])
+KaMinPar_PairwiseLP_no_shrinking_lazy_ilp_nz100 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__no-shrinking__lazy-ILP", sep = "\\"),
+                                                    "name" = "kaminpar_only-ref-[KaHIP]_lazy-ilp_pairwise-lp__eps0__nz100k__2023-02-27_19-47-56.csv",
+                                                    "algo_name" = "KaMinPar-PairwiseLP-lazyILP 100nz",
+                                                    "color" = palette[[7]])
+KaMinPar_PairwiseLP_no_shrinking_lazy_ilp_nz150 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__no-shrinking__lazy-ILP", sep = "\\"),
+                                                    "name" = "kaminpar_only-ref-[KaHIP]_lazy-ilp_pairwise-lp__eps0__nz150k__2023-02-27_19-47-56.csv",
+                                                    "algo_name" = "KaMinPar-PairwiseLP-lazyILP 150nz",
+                                                    "color" = palette[[8]])
+KaMinPar_PairwiseLP_no_shrinking_lazy_ilp_nz200 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__no-shrinking__lazy-ILP", sep = "\\"),
+                                                    "name" = "kaminpar_only-ref-[KaHIP]_lazy-ilp_pairwise-lp__eps0__nz200k__2023-02-27_19-47-56.csv",
+                                                    "algo_name" = "KaMinPar-PairwiseLP-lazyILP 200nz",
+                                                    "color" = palette[[9]])
+KaMinPar_PairwiseLP_no_shrinking_lazy_ilp_nz500 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__no-shrinking__lazy-ILP", sep = "\\"),
+                                                    "name" = "kaminpar_only-ref-[KaHIP]_lazy-ilp_pairwise-lp__eps0__nz500k__2023-02-27_19-47-56.csv",
+                                                    "algo_name" = "KaMinPar-PairwiseLP-lazyILP 500nz",
+                                                    "color" = palette[[5]])
+
+
+# ================== KaMinPar-PairwiseLP no-shrinking lazy-ILP max cut increase compare ======================
+KaMinPar_PairwiseLP_lazy_ilp_cut0_1 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__no-shrinking__lazy-ILP", sep = "\\"),
+                                                      "name" = "kaminpar_only-ref-[KaHIP]_lazy-ilp_cutIncrease0.01_pairwise-lp__eps0__nz150k__2023-03-06_19-57-53.csv",
+                                                      "algo_name" = "KaMinPar-PairwiseLP-lazyILP cutIncrease 0-01",
+                                                      "color" = palette[[2]])
+KaMinPar_PairwiseLP_lazy_ilp_cut0_2 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__no-shrinking__lazy-ILP", sep = "\\"),
+                                         "name" = "kaminpar_only-ref-[KaHIP]_lazy-ilp_cutIncrease0.02_pairwise-lp__eps0__nz150k__2023-03-06_19-57-53.csv",
+                                         "algo_name" = "KaMinPar-PairwiseLP-lazyILP cutIncrease 0-02",
+                                         "color" = palette[[3]])
+KaMinPar_PairwiseLP_lazy_ilp_cut0_4 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__no-shrinking__lazy-ILP", sep = "\\"),
+                                         "name" = "kaminpar_only-ref-[KaHIP]_lazy-ilp_cutIncrease0.04_pairwise-lp__eps0__nz150k__2023-03-06_19-57-53.csv",
+                                         "algo_name" = "KaMinPar-PairwiseLP-lazyILP cutIncrease 0-04",
+                                         "color" = palette[[4]])
+KaMinPar_PairwiseLP_lazy_ilp_cut0_8 <- c("base_dir" = paste(kaminpar_dir, "PairwiseLP__no-shrinking__lazy-ILP", sep = "\\"),
+                                         "name" = "kaminpar_only-ref-[KaHIP]_lazy-ilp_cutIncrease0.08_pairwise-lp__eps0__nz150k__2023-03-06_19-57-53.csv",
+                                         "algo_name" = "KaMinPar-PairwiseLP-lazyILP cutIncrease 0-08",
+                                         "color" = palette[[5]])
+
+
+# ================== KaMinPar-Constrained-V-Cycle ======================
+source("./Constrained-V-Cycle.R")
+
+
+t <- create_performance_profile(list(KaHIP_single, KaMinPar))
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP, KaMinPar_PairwiseLP_geom_shrinking))
 t <- create_performance_profile(list(KaMinPar_PairwiseLP, KaMinPar_PairwiseLP_geom_shrinking, KaMinPar_PairwiseLP_manyILPs, KaMinPar_PairwiseLP_rand2))
 t <- create_performance_profile(list(KaMinPar_after_KaHIP, KaMinPar_PairwiseLP, KaMinPar_PairwiseLP_geom_shrinking))
 t <- create_performance_profile(list(KaHIP_evolutionary, KaHIP_single, KaMinPar_PairwiseLP_geom_shrinking))
+
+# ======================== Compare NZs =====================================
+t <- create_performance_profile(list(KaMinPar_PairwiseLP_geom_shrinking_nz50, KaMinPar_PairwiseLP_geom_shrinking_nz100, KaMinPar_PairwiseLP_geom_shrinking_nz150), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_PairwiseLP_geom_shrinking_nz50, KaMinPar_PairwiseLP_geom_shrinking_nz150, KaMinPar_PairwiseLP_geom_shrinking_nz500), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_PairwiseLP_geom_shrinking_nz150, KaMinPar_PairwiseLP_geom_shrinking_nz200, KaMinPar_PairwiseLP_geom_shrinking_nz500))
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP_geom_shrinking_nz50, KaMinPar_PairwiseLP_geom_shrinking_nz150))
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP_geom_shrinking_nz500, KaMinPar_PairwiseLP_geom_shrinking_nz150))
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP_geom_shrinking_nz500, KaMinPar_PairwiseLP_geom_shrinking_nz50))
+
+
+t <- create_performance_profile(list(KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz50, KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz100, KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz150), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz150, KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz200, KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz500))
+
+
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP_geom_shrinking_nz500, KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz500))
+
+
+t <- create_performance_profile(list(KaMinPar_PairwiseLP_lazy_ilp_cut0_1, KaMinPar_PairwiseLP_lazy_ilp_cut0_2, KaMinPar_PairwiseLP_lazy_ilp_cut0_4))
+t <- create_performance_profile(list(KaMinPar_PairwiseLP_lazy_ilp_cut0_2, KaMinPar_PairwiseLP_lazy_ilp_cut0_4, KaMinPar_PairwiseLP_lazy_ilp_cut0_8))
+
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP_lazy_ilp_cut0_1, KaMinPar_PairwiseLP_lazy_ilp_cut0_2))
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP_lazy_ilp_cut0_4, KaMinPar_PairwiseLP_lazy_ilp_cut0_8))
+
+
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP_lazy_ilp_cut0_1, KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz150))
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP_no_shrinking_lazy_ilp_nz150, KaMinPar_PairwiseLP_geom_shrinking_lazy_ilp_nz150))
+
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP_no_shrinking_lazy_ilp_nz150, KaMinPar_PairwiseLP_geom_shrinking_nz150))
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_PairwiseLP_lazy_ilp_cut0_1, KaMinPar_PairwiseLP_geom_shrinking_nz150))
+
+t <- create_performance_profile(list(KaMinPar_PairwiseLP_lazy_ilp_cut0_1, KaMinPar_PairwiseLP_geom_shrinking_nz150), dry_run = F)
+
+
+
+
+
+
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_01_maxClusterWeight0_01, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_02_maxClusterWeight0_01, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_04_maxClusterWeight0_01, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_08_maxClusterWeight0_01), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_01_maxClusterWeight0_03, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_02_maxClusterWeight0_03, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_04_maxClusterWeight0_03, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_08_maxClusterWeight0_03), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_01_maxClusterWeight0_05, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_02_maxClusterWeight0_05, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_04_maxClusterWeight0_05, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_08_maxClusterWeight0_05), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_01_maxClusterWeight0_10, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_02_maxClusterWeight0_10, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_04_maxClusterWeight0_10, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_08_maxClusterWeight0_10), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_01_maxClusterWeight0_20, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_02_maxClusterWeight0_20, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_04_maxClusterWeight0_20, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_08_maxClusterWeight0_20), dry_run = F)
+
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_maxClusterWeight0_01_best, KaMinPar_Constr_V_Cycle_maxClusterWeight0_03_best, KaMinPar_Constr_V_Cycle_maxClusterWeight0_05_best), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_maxClusterWeight0_05_best, KaMinPar_Constr_V_Cycle_maxClusterWeight0_10_best, KaMinPar_Constr_V_Cycle_maxClusterWeight0_20_best), dry_run = F)
+
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_Constr_V_Cycle_maxClusterWeight0_01_best, KaMinPar_PairwiseLP_lazy_ilp_cut0_1), dry_run = F)
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_04_maxClusterWeight0_01, KaMinPar_PairwiseLP_lazy_ilp_cut0_1), dry_run = F)
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_Constr_V_Cycle_maxClusterWeight0_03_best, KaMinPar_PairwiseLP_lazy_ilp_cut0_1), dry_run = F)
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_Constr_V_Cycle_maxClusterWeight0_05_best, KaMinPar_PairwiseLP_lazy_ilp_cut0_1), dry_run = F)
+
+
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_Constr_V_Cycle_maxClusterWeight0_01_best), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_maxClusterWeight0_01_best, KaMinPar_PairwiseLP_lazy_ilp_cut0_1), dry_run = F)
+
+
+# No imbalance increase
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_01, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_02_maxClusterWeight0_01, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_04_maxClusterWeight0_01, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_08_maxClusterWeight0_01), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_03, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_02_maxClusterWeight0_03, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_04_maxClusterWeight0_03, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_08_maxClusterWeight0_03), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_05, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_02_maxClusterWeight0_05, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_04_maxClusterWeight0_05, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_08_maxClusterWeight0_05), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_10, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_02_maxClusterWeight0_10, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_04_maxClusterWeight0_10, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_08_maxClusterWeight0_10), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_20, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_02_maxClusterWeight0_20, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_04_maxClusterWeight0_20, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_08_maxClusterWeight0_20), dry_run = F)
+
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_01, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_01_maxClusterWeight0_01), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_03, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_01_maxClusterWeight0_03), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_05, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_01_maxClusterWeight0_05), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_10, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_01_maxClusterWeight0_10), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_20, KaMinPar_Constr_V_Cycle_lazy_ilp_cut0_01_maxClusterWeight0_20), dry_run = F)
+
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_01, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_03, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_05), dry_run = F)
+t <- create_performance_profile(list(KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_05, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_10, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_20), dry_run = F)
+
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_01, KaMinPar_Constr_V_Cycle_maxClusterWeight0_01_best), dry_run = F)
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_03, KaMinPar_Constr_V_Cycle_maxClusterWeight0_01_best), dry_run = F)
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_05, KaMinPar_Constr_V_Cycle_maxClusterWeight0_01_best), dry_run = F)
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_10, KaMinPar_Constr_V_Cycle_maxClusterWeight0_01_best), dry_run = F)
+t <- create_performance_profile(list(KaHIP_single, KaMinPar_Constr_V_Cycle_lazy_ilp_no_imbalance_increase_cut0_01_maxClusterWeight0_20, KaMinPar_Constr_V_Cycle_maxClusterWeight0_01_best), dry_run = F)
+
