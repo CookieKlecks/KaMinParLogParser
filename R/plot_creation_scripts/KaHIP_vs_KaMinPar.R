@@ -234,6 +234,27 @@ improve_algo_names <- function(df) {
     if(algo == "kaminpar_only-ref-[KaHIP]_geometric-shrinking_pairwise-lp_eps_0_2023-02-20_03-25-02") {
       algorithm <- "KaMinPar-PairwiseLP-LazyILP"
     }
+    if(algo == "kaminpar_only-ref-[KaHIP]_geometric-shrinking_lazy-ilp_pairwise-lp__eps0__nz50k__2023-02-27_19-47-56") {
+      algorithm <- "KaMinPar-PairwiseLP-shrinking_eps-lazyILP 50nz"
+    }
+    if(algo == "kaminpar_only-ref-[KaHIP]_geometric-shrinking_lazy-ilp_pairwise-lp__eps0__nz100k__2023-02-27_19-47-56") {
+      algorithm <- "KaMinPar-PairwiseLP-shrinking_eps-lazyILP 100nz"
+    }
+    if(algo == "kaminpar_only-ref-[KaHIP]_geometric-shrinking_lazy-ilp_pairwise-lp__eps0__nz150k__2023-02-27_19-47-56") {
+      algorithm <- "KaMinPar-PairwiseLP-shrinking_eps-lazyILP 150nz"
+    }
+    if(algo == "kaminpar_only-ref-[KaHIP]_geometric-shrinking_lazy-ilp_pairwise-lp__eps0__nz200k__2023-02-27_19-47-56") {
+      algorithm <- "KaMinPar-PairwiseLP-shrinking_eps-lazyILP 200nz"
+    }
+    if(algo == "kaminpar_only-ref-[KaHIP]_geometric-shrinking_lazy-ilp_pairwise-lp__eps0__nz500k__2023-02-27_19-47-56") {
+      algorithm <- "KaMinPar-PairwiseLP-shrinking_eps-lazyILP 500nz"
+    }
+    if(algo == "kaminpar_only-ref-[KaHIP]_lazy-ilp_cutIncrease0.01_pairwise-lp__eps0__nz150k__2023-03-06_19-57-53") {
+      algorithm <- "KaMinPar-PairwiseLP-lazyILP cutIncrease 0-01"
+    }
+    if(algo == "kaminpar_only-ref-[KaHIP]_lazy-ilp_pairwise-lp__eps0__nz150k__2023-02-27_19-47-56") {
+      algorithm <- "KaMinPar-PairwiseLP-lazyILP 150nz"
+    }
     return(algorithm)
   })
   
@@ -246,8 +267,8 @@ improve_algo_names <- function(df) {
 create_timed_out_ilp_plot(kaminpar_dir, "timed_out_ilps.pdf", output_dir, filter_data = improve_algo_names)
 
 
-experiment_dir_running_times <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaMinPar\\compare_running_times"
-create_running_time_box_plot(experiment_dir_running_times, "running_times_2.pdf", experiment_dir_running_times, epsilon = 0, filter_data = improve_algo_names)
+experiment_dir_running_times <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\TMP_PARSE_RUNNING_TIMES"
+create_running_time_box_plot(experiment_dir_running_times, "running_times.pdf", experiment_dir_running_times, epsilon = 0, filter_data = improve_algo_names)
 
 
 
