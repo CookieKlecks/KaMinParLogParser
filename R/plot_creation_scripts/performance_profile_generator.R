@@ -5,27 +5,32 @@ library(tidyr)
 
 experiment_dir <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaHIP_vs_KaMinPar"
 output_dir <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaHIP_vs_KaMinPar"
-kaminpar_dir <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaMinPar\\runs"
+kaminpar_dir <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaMinPar"
 kahip_dir <- "E:\\Cedrico\\KIT\\HiWi\\parse_results\\KaHIP\\runs"
 
 
-create_performance_profile <- function(run_configs, file_name = "") {
+create_performance_profile <- function(run_configs, file_name = "", dry_run = F) {
   
   dataframes <- vector("list", length(run_configs))
-  #algo_color_mapping <- c()
+  # use .GlobalEnv to access the global variables (see https://stackoverflow.com/a/63487249)
+  .GlobalEnv$algo_color_mapping <- c()
+  algo_names <- vector("list", 0)
+  
   generated_file_name <- ""
   i <- 1
   for (config in run_configs) {
     print(paste(config["base_dir"], config["name"], sep = "\\"))
     dataframes[[i]] <- read.csv(paste(config["base_dir"], config["name"], sep = "\\"), header = T)
-    dataframes[[i]] <- aggreg_data(dataframes[[i]], 70000, 0) %>% drop_na()
+    dataframes[[i]] <- aggreg_data(dataframes[[i]], 70000, 0) #%>% drop_na()
     dataframes[[i]] <- dataframes[[i]] %>% filter(graph %in% dataframes[[1]]$graph) %>% 
       filter(graph != '/global_data/graphs/benchmark_sets/bbgb_paper/fe_body.graph') %>%
-      filter(graph != '/global_data/graphs/benchmark_sets/bbgb_paper/dolphins.graph') %>%
-      filter(graph != '/global_data/graphs/benchmark_sets/bbgb_paper/finan512.graph')
+      #filter(graph != '/global_data/graphs/benchmark_sets/bbgb_paper/dolphins.graph') %>%
+      filter(graph != '/global_data/graphs/benchmark_sets/bbgb_paper/finan512.graph') #%>%
+      #filter(!infeasible)
     dataframes[[i]]$algorithm <- config["algo_name"]
     
-    #algo_color_mapping[[config["algo_name"]]] <- config["color"]
+    .GlobalEnv$algo_color_mapping <- append(algo_color_mapping, c(config[["color"]]))
+    algo_names <- append(algo_names, c(config[["algo_name"]]))
     
     if (i != 1) {
       generated_file_name <- paste(generated_file_name, "-vs-", sep = "")
@@ -35,12 +40,22 @@ create_performance_profile <- function(run_configs, file_name = "") {
     i <- i + 1
   }
   
+  #semi_join_filter = semi_join(dataframes[[1]], dataframes[[2]], by=c('graph','k')) 
+  #dataframes[[1]] = semi_join(dataframes[[1]], semi_join_filter, by=c('graph','k'))
+  #dataframes[[2]] = semi_join(dataframes[[2]], semi_join_filter, by=c('graph','k')) 
+  
+  names(.GlobalEnv$algo_color_mapping) <- algo_names
+  
   if (file_name == "") {
     file_name <- generated_file_name
   }
   
-  plot <- performace_plot(dataframes, objective = "avg_cut")
-  save_ggplot(plot, output_dir, file_name, width = 22, height = 15)
+  algo_color_mapping <- "bla"
+  
+  if (!dry_run) {
+    plot <- performace_plot(dataframes, objective = "avg_cut")
+    save_ggplot(plot, output_dir, file_name, width = 22, height = 15)
+  }
   
   return(dataframes)
 }
